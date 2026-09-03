@@ -1627,10 +1627,6 @@ hr{display:none!important;border:0!important;height:0!important;margin:0!importa
 .google-login-error{display:none;color:#b3261e;font-size:.76rem;margin-top:10px}
 .google-login-error.active{display:block}
 </style>
-    <!-- Google AdSense -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3170668215980932"
-     crossorigin="anonymous"></script>
-    <!-- /Google AdSense -->
 </head>
 <body>
 
@@ -6961,6 +6957,69 @@ let recorder=null, stream=null, chunks=[], timer=null, seconds=0;
 let audioContext=null, analyser=null, analyserData=null, waveRAF=null, sourceNode=null;
 let dbPromise=null;
 
+// Live microphone waveform. These functions must live in the same scope as
+// the recorder variables; the previous version had them inside another tool's
+// private script, which caused a ReferenceError before recording could start.
+function drawIdleWave(){
+  const path=$('vr-wave-path'), glow=$('vr-wave-glow');
+  if(!path) return;
+  const pts=[];
+  for(let x=0;x<=600;x+=10){
+    const y=30+Math.sin(x/36)*1.2;
+    pts.push((x?'L':'M')+x+' '+y.toFixed(1));
+  }
+  const d=pts.join(' ');
+  path.setAttribute('d',d);
+  if(glow) glow.setAttribute('d',d);
+}
+function stopLiveWave(){
+  if(waveRAF){cancelAnimationFrame(waveRAF);waveRAF=null;}
+  if(sourceNode){try{sourceNode.disconnect();}catch(e){} sourceNode=null;}
+  if(audioContext){try{audioContext.close();}catch(e){} audioContext=null;}
+  analyser=null; analyserData=null;
+  const wave=$('vr-live-wave');
+  if(wave){wave.classList.remove('recording');wave.classList.add('idle');}
+  drawIdleWave();
+}
+async function startLiveWave(mediaStream){
+  stopLiveWave();
+  const wave=$('vr-live-wave');
+  if(wave){wave.classList.remove('idle');wave.classList.add('recording');}
+  const AC=window.AudioContext||window.webkitAudioContext;
+  if(!AC) return;
+  try{
+    audioContext=new AC();
+    analyser=audioContext.createAnalyser();
+    analyser.fftSize=512;
+    analyser.smoothingTimeConstant=.82;
+    analyserData=new Uint8Array(analyser.fftSize);
+    sourceNode=audioContext.createMediaStreamSource(mediaStream);
+    sourceNode.connect(analyser);
+    if(audioContext.state==='suspended') await audioContext.resume();
+    const path=$('vr-wave-path'), glow=$('vr-wave-glow');
+    const render=()=>{
+      if(!analyser || !path) return;
+      analyser.getByteTimeDomainData(analyserData);
+      const pts=[];
+      for(let x=0;x<=600;x+=6){
+        const i=Math.min(analyserData.length-1,Math.floor((x/600)*(analyserData.length-1)));
+        const v=(analyserData[i]-128)/128;
+        const y=Math.max(5,Math.min(55,30+v*24));
+        pts.push((x?'L':'M')+x+' '+y.toFixed(1));
+      }
+      const d=pts.join(' ');
+      path.setAttribute('d',d);
+      if(glow) glow.setAttribute('d',d);
+      waveRAF=requestAnimationFrame(render);
+    };
+    render();
+  }catch(err){
+    // A visualizer failure must never stop the actual audio recording.
+    console.warn('Live waveform unavailable:',err);
+    drawIdleWave();
+  }
+}
+
 function db(){
   if(dbPromise) return dbPromise;
   dbPromise=new Promise((resolve,reject)=>{
@@ -6982,8 +7041,14 @@ function setUI(rec){
   const controls=$('vr-main-controls'); if(controls)controls.classList.toggle('is-recording',rec);
 }
 function bestMime(){
-  const list=['audio/webm;codecs=opus','audio/mp4','audio/webm'];
-  return list.find(x=>window.MediaRecorder&&MediaRecorder.isTypeSupported(x))||'';
+  // Prefer broadly supported recording formats. Some browsers advertise
+  // audio/mp4 but fail when MediaRecorder is actually started.
+  const list=[
+    'audio/webm;codecs=opus',
+    'audio/webm',
+    'audio/ogg;codecs=opus'
+  ];
+  return list.find(x=>window.MediaRecorder && MediaRecorder.isTypeSupported(x)) || '';
 }
 
 
@@ -7007,13 +7072,29 @@ window.voiceRecorderToggle=async function(){
     $('vr-status-text').textContent='ब्राउज़र से माइक्रोफोन अनुमति मांगी जा रही है...';
 
     stream = await navigator.mediaDevices.getUserMedia({
-      audio: true
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true
+      }
     });
-    startLiveWave(stream);
+
+    if(!window.MediaRecorder){
+      throw new Error('MediaRecorder is not supported');
+    }
 
     chunks=[];
     const mime=bestMime();
-    recorder=new MediaRecorder(stream,mime ? {mimeType:mime} : undefined);
+
+    // Some browsers reject a specific MIME type even after reporting support.
+    // Fall back safely to the browser's default recorder format.
+    try{
+      recorder = new MediaRecorder(stream, mime ? {mimeType:mime} : undefined);
+    }catch(mediaError){
+      recorder = new MediaRecorder(stream);
+    }
+
+    await startLiveWave(stream);
 
     recorder.ondataavailable=function(e){
       if(e.data && e.data.size>0) chunks.push(e.data);
@@ -7062,7 +7143,9 @@ window.voiceRecorderToggle=async function(){
       }
     };
 
-    recorder.start(500);
+    // Start immediately and request data every second so audio chunks are
+    // continuously collected. This prevents empty recordings on some Android browsers.
+    recorder.start(1000);
 
     seconds=0;
     $('vr-time').textContent='00:00';
@@ -7075,6 +7158,7 @@ window.voiceRecorderToggle=async function(){
     },1000);
 
   }catch(e){
+    console.error('Voice recorder start failed:', e);
     clearInterval(timer);
 
     if(e && (e.name==='NotAllowedError' || e.name==='PermissionDeniedError')){
@@ -7083,6 +7167,8 @@ window.voiceRecorderToggle=async function(){
       $('vr-status-text').textContent='डिवाइस में कोई माइक्रोफोन नहीं मिला';
     }else if(e && e.name==='SecurityError'){
       $('vr-status-text').textContent='इस पेज के सुरक्षा मोड में माइक्रोफोन अनुरोध ब्लॉक है';
+    }else if(e && /MediaRecorder/i.test(String(e.message || e))){
+      $('vr-status-text').textContent='इस ब्राउज़र में ऑडियो रिकॉर्डर सपोर्ट उपलब्ध नहीं है';
     }else{
       $('vr-status-text').textContent='माइक्रोफोन शुरू नहीं हो सका';
     }
@@ -7103,7 +7189,10 @@ window.voiceRecorderToggle=async function(){
 
 function stopRecording(){
   clearInterval(timer);
-  if(recorder&&recorder.state==='recording')recorder.stop();
+  if(recorder && recorder.state==='recording'){
+    try{ recorder.requestData(); }catch(e){}
+    recorder.stop();
+  }
 }
 window.voiceRecorderStop=function(){if(recorder&&recorder.state==='recording')stopRecording();};
 async function renderVoiceList(){
@@ -7308,7 +7397,7 @@ body{align-items:stretch;background:linear-gradient(135deg,var(--bg-light),var(-
 
 <script id="taraju-google-login-addon-js">
 (function(){
-    const GOOGLE_CLIENT_ID='617375562543-iojpcek0skc33nd3tvi1osn4iguivktd.apps.googleusercontent.com';
+    const GOOGLE_CLIENT_ID='109387518672-28b2h15cd320ch8o94encsekpf9bdqvi.apps.googleusercontent.com';
     let user=null;
 
     function en(){ return typeof currentLanguage!=='undefined' && currentLanguage==='en'; }
