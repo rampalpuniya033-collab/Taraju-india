@@ -1627,18 +1627,10 @@ hr{display:none!important;border:0!important;height:0!important;margin:0!importa
 .google-login-error{display:none;color:#b3261e;font-size:.76rem;margin-top:10px}
 .google-login-error.active{display:block}
 </style>
-
-<style id="password-system-removed">
-#password-screen,#login-screen,#lock-screen,
-.password-screen,.login-screen,.lock-screen,
-.password-overlay,.password-overlay,.login-overlay,
-#password-modal,#login-modal,#set-password-modal,
-.password-modal,.login-modal,.set-password-modal,
-#personal-store-password-modal,.personal-store-password-modal {
-  display:none !important;
-}
-</style>
-
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3170668215980932"
+     crossorigin="anonymous"></script>
+    <!-- /Google AdSense -->
 </head>
 <body>
 
@@ -6990,14 +6982,8 @@ function setUI(rec){
   const controls=$('vr-main-controls'); if(controls)controls.classList.toggle('is-recording',rec);
 }
 function bestMime(){
-  // Prefer broadly supported recording formats. Some browsers advertise
-  // audio/mp4 but fail when MediaRecorder is actually started.
-  const list=[
-    'audio/webm;codecs=opus',
-    'audio/webm',
-    'audio/ogg;codecs=opus'
-  ];
-  return list.find(x=>window.MediaRecorder && MediaRecorder.isTypeSupported(x)) || '';
+  const list=['audio/webm;codecs=opus','audio/mp4','audio/webm'];
+  return list.find(x=>window.MediaRecorder&&MediaRecorder.isTypeSupported(x))||'';
 }
 
 
@@ -7021,29 +7007,13 @@ window.voiceRecorderToggle=async function(){
     $('vr-status-text').textContent='ब्राउज़र से माइक्रोफोन अनुमति मांगी जा रही है...';
 
     stream = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true
-      }
+      audio: true
     });
-
-    if(!window.MediaRecorder){
-      throw new Error('MediaRecorder is not supported');
-    }
+    startLiveWave(stream);
 
     chunks=[];
     const mime=bestMime();
-
-    // Some browsers reject a specific MIME type even after reporting support.
-    // Fall back safely to the browser's default recorder format.
-    try{
-      recorder = new MediaRecorder(stream, mime ? {mimeType:mime} : undefined);
-    }catch(mediaError){
-      recorder = new MediaRecorder(stream);
-    }
-
-    startLiveWave(stream);
+    recorder=new MediaRecorder(stream,mime ? {mimeType:mime} : undefined);
 
     recorder.ondataavailable=function(e){
       if(e.data && e.data.size>0) chunks.push(e.data);
@@ -7092,9 +7062,7 @@ window.voiceRecorderToggle=async function(){
       }
     };
 
-    // Start immediately and request data every second so audio chunks are
-    // continuously collected. This prevents empty recordings on some Android browsers.
-    recorder.start(1000);
+    recorder.start(500);
 
     seconds=0;
     $('vr-time').textContent='00:00';
@@ -7115,8 +7083,6 @@ window.voiceRecorderToggle=async function(){
       $('vr-status-text').textContent='डिवाइस में कोई माइक्रोफोन नहीं मिला';
     }else if(e && e.name==='SecurityError'){
       $('vr-status-text').textContent='इस पेज के सुरक्षा मोड में माइक्रोफोन अनुरोध ब्लॉक है';
-    }else if(e && /MediaRecorder/i.test(String(e.message || e))){
-      $('vr-status-text').textContent='इस ब्राउज़र में ऑडियो रिकॉर्डर सपोर्ट उपलब्ध नहीं है';
     }else{
       $('vr-status-text').textContent='माइक्रोफोन शुरू नहीं हो सका';
     }
@@ -7137,10 +7103,7 @@ window.voiceRecorderToggle=async function(){
 
 function stopRecording(){
   clearInterval(timer);
-  if(recorder && recorder.state==='recording'){
-    try{ recorder.requestData(); }catch(e){}
-    recorder.stop();
-  }
+  if(recorder&&recorder.state==='recording')recorder.stop();
 }
 window.voiceRecorderStop=function(){if(recorder&&recorder.state==='recording')stopRecording();};
 async function renderVoiceList(){
@@ -7345,7 +7308,7 @@ body{align-items:stretch;background:linear-gradient(135deg,var(--bg-light),var(-
 
 <script id="taraju-google-login-addon-js">
 (function(){
-    const GOOGLE_CLIENT_ID='109387518672-28b2h15cd320ch8o94encsekpf9bdqvi.apps.googleusercontent.com';
+    const GOOGLE_CLIENT_ID='617375562543-iojpcek0skc33nd3tvi1osn4iguivktd.apps.googleusercontent.com';
     let user=null;
 
     function en(){ return typeof currentLanguage!=='undefined' && currentLanguage==='en'; }
