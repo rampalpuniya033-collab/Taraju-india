@@ -1953,9 +1953,8 @@ hr{display:none!important;border:0!important;height:0!important;margin:0!importa
         </div>
         <div class="photo-pdf-password-body">
           <p id="photo-pdf-password-sub">PDF को सुरक्षित करने के लिए पासवर्ड सेट करें। फिर PDF खोलते समय पासवर्ड मांगा जाएगा।</p>
-          <div class="photo-pdf-password-field"><label id="photo-pdf-password-label">पासवर्ड</label><input id="photo-pdf-password" type="password" autocomplete="new-password" placeholder="पासवर्ड दर्ज करें"></div>
-          <div class="photo-pdf-password-field"><label id="photo-pdf-password-confirm-label">पासवर्ड दोबारा दर्ज करें</label><input id="photo-pdf-password-confirm" type="password" autocomplete="new-password" placeholder="पासवर्ड की पुष्टि करें"></div>
-          <label class="photo-pdf-password-show"><input id="photo-pdf-password-show" type="checkbox" onchange="togglePhotoPdfPasswordVisibility()"><span id="photo-pdf-password-show-label">पासवर्ड दिखाएं</span></label>
+          <div class="photo-pdf-password-field"><label id="photo-pdf-password-label">पासवर्ड</label><div class="photo-pdf-password-wrap"><input id="photo-pdf-password" type="password" autocomplete="new-password" placeholder="पासवर्ड दर्ज करें"><button type="button" class="photo-pdf-password-toggle" data-photo-password-toggle="photo-pdf-password" aria-label="Show password" title="Show password"><svg class="photo-eye-show" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.5"></circle></svg><svg class="photo-eye-hide" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"></path><path d="M10.6 5.2A10.8 10.8 0 0 1 12 5c6 0 9.5 7 9.5 7a18 18 0 0 1-3.1 3.8"></path><path d="M6.2 6.3C3.9 8 2.5 12 2.5 12s3.5 7 9.5 7c1.7 0 3.2-.5 4.5-1.2"></path><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"></path></svg></button></div></div>
+          <div class="photo-pdf-password-field"><label id="photo-pdf-password-confirm-label">पासवर्ड दोबारा दर्ज करें</label><div class="photo-pdf-password-wrap"><input id="photo-pdf-password-confirm" type="password" autocomplete="new-password" placeholder="पासवर्ड की पुष्टि करें"><button type="button" class="photo-pdf-password-toggle" data-photo-password-toggle="photo-pdf-password-confirm" aria-label="Show password" title="Show password"><svg class="photo-eye-show" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.5"></circle></svg><svg class="photo-eye-hide" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"></path><path d="M10.6 5.2A10.8 10.8 0 0 1 12 5c6 0 9.5 7 9.5 7a18 18 0 0 1-3.1 3.8"></path><path d="M6.2 6.3C3.9 8 2.5 12 2.5 12s3.5 7 9.5 7c1.7 0 3.2-.5 4.5-1.2"></path><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"></path></svg></button></div></div>
           <div id="photo-pdf-password-error" class="photo-pdf-password-error" role="alert"></div>
           <button id="photo-pdf-password-submit" type="button" class="btn-primary" style="width:100%;margin-top:8px" onclick="confirmPhotoPdfPassword()">पासवर्ड के साथ PDF बनाएं</button>
           <button id="photo-pdf-password-skip" type="button" class="btn-secondary" style="width:100%;margin-top:10px" onclick="confirmPhotoPdfPassword(true)">बिना पासवर्ड PDF बनाएं</button>
@@ -5119,7 +5118,7 @@ hr{display:none!important;border:0!important;height:0!important;margin:0!importa
     } catch(e) {}
   };
 
-  function save(a){localStorage.setItem(KEY,JSON.stringify(a))}
+  function save(a){localStorage.setItem(KEY(),JSON.stringify(a))}
   function lang(hi,en){return (typeof currentLanguage!=='undefined'&&currentLanguage==='hi')?hi:en}
   function current(){
     const a=read();
@@ -5676,6 +5675,34 @@ hr{display:none!important;border:0!important;height:0!important;margin:0!importa
 </div>
 
 
+<script id="taraju-account-scope-js">
+(function(){
+  'use strict';
+  const USER_KEY='taraju_google_user';
+  let lastScope='';
+  const listeners=[];
+  function getUser(){try{return JSON.parse(localStorage.getItem(USER_KEY)||'null')}catch(e){return null}}
+  function normalize(v){return String(v||'').trim().toLowerCase()}
+  function encodeScope(v){
+    const raw=String(v||'guest');
+    try{return btoa(unescape(encodeURIComponent(raw))).replace(/[^a-zA-Z0-9_-]/g,'').slice(0,80)||'guest'}catch(e){return raw.replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,80)||'guest'}
+  }
+  function scope(){const u=getUser();return encodeScope(u?.sub||normalize(u?.email)||'guest')}
+  function email(){const u=getUser();return normalize(u?.email)}
+  function authenticated(){const u=getUser();return !!(u&&(u.sub||u.email))}
+  function key(base){return base+'__'+scope()}
+  function notify(){const next=scope();if(next===lastScope)return;const old=lastScope;lastScope=next;listeners.slice().forEach(fn=>{try{fn(next,old)}catch(e){}})}
+  lastScope=scope();
+  window.TarajuAccountScope={
+    getUser,email,scope,authenticated,key,
+    onChange:function(fn){if(typeof fn==='function')listeners.push(fn);return()=>{const i=listeners.indexOf(fn);if(i>=0)listeners.splice(i,1)}},
+    notify,
+    lockKey:function(base){return key(base)}
+  };
+  window.addEventListener('storage',e=>{if(e.key===USER_KEY)notify()});
+})();
+</script>
+
 <script id="taraju-personal-store-cloud-config">
 (function(){
   const KEY='taraju_personal_cloud_config_v1';
@@ -5706,15 +5733,29 @@ hr{display:none!important;border:0!important;height:0!important;margin:0!importa
 
 <script id="taraju-personal-store-js">
 (function(){
-  const DB_NAME='taraju_personal_store_v1', STORE='files'; let dbPromise=null;
-  function db(){if(dbPromise)return dbPromise;dbPromise=new Promise((resolve,reject)=>{const req=indexedDB.open(DB_NAME,1);req.onupgradeneeded=()=>{const d=req.result;if(!d.objectStoreNames.contains(STORE))d.createObjectStore(STORE,{keyPath:'id',autoIncrement:true});};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});return dbPromise;}
-  async function allFiles(){const d=await db();return new Promise((res,rej)=>{const r=d.transaction(STORE,'readonly').objectStore(STORE).getAll();r.onsuccess=()=>res(r.result||[]);r.onerror=()=>rej(r.error);});}
-  async function addFile(f){const d=await db();return new Promise((res,rej)=>{const r=d.transaction(STORE,'readwrite').objectStore(STORE).add({name:f.name,type:f.type||'application/octet-stream',size:f.size,blob:f,createdAt:Date.now()});r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+  const BASE_DB_NAME='taraju_personal_store_v1', STORE='files'; let dbPromise=null, dbScope='';
+  const accountScope=()=>window.TarajuAccountScope?.scope?.()||'guest';
+  async function migrateLegacyIfFirstAccount(){
+    if(!window.TarajuAccountScope?.authenticated?.()) return;
+    const ownerKey='taraju_personal_store_legacy_owner_v1';
+    if(localStorage.getItem(ownerKey)) return;
+    try{
+      const legacy=await new Promise((resolve,reject)=>{const req=indexedDB.open(BASE_DB_NAME,1);req.onupgradeneeded=()=>{const d=req.result;if(!d.objectStoreNames.contains(STORE))d.createObjectStore(STORE,{keyPath:'id',autoIncrement:true});};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)});
+      const rows=await new Promise((resolve,reject)=>{const r=legacy.transaction(STORE,'readonly').objectStore(STORE).getAll();r.onsuccess=()=>resolve(r.result||[]);r.onerror=()=>reject(r.error)});
+      if(rows.length){const target=await db();await new Promise((resolve,reject)=>{const tx=target.transaction(STORE,'readwrite'),os=tx.objectStore(STORE);rows.forEach(x=>os.put(x));tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)});}
+      try{legacy.close()}catch(e){}
+      localStorage.setItem(ownerKey,window.TarajuAccountScope.scope());
+    }catch(e){}
+  }
+  function db(){const sc=accountScope();if(dbPromise&&dbScope===sc)return dbPromise;dbScope=sc;dbPromise=new Promise((resolve,reject)=>{const req=indexedDB.open(BASE_DB_NAME+'__'+sc,1);req.onupgradeneeded=()=>{const d=req.result;if(!d.objectStoreNames.contains(STORE))d.createObjectStore(STORE,{keyPath:'id',autoIncrement:true});};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});return dbPromise;}
+  async function allFiles(){await migrateLegacyIfFirstAccount();const d=await db();return new Promise((res,rej)=>{const r=d.transaction(STORE,'readonly').objectStore(STORE).getAll();r.onsuccess=()=>res(r.result||[]);r.onerror=()=>rej(r.error);});}
+  async function addFile(f){await migrateLegacyIfFirstAccount();const d=await db();return new Promise((res,rej)=>{const r=d.transaction(STORE,'readwrite').objectStore(STORE).add({name:f.name,type:f.type||'application/octet-stream',size:f.size,blob:f,createdAt:Date.now()});r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
   window.TarajuPersonalStoreAddFile=addFile;
+  window.TarajuAccountScope?.onChange?.(()=>{dbPromise=null;dbScope='';});
 
-  async function getFile(id){const d=await db();return new Promise((res,rej)=>{const r=d.transaction(STORE,'readonly').objectStore(STORE).get(id);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
-  async function deleteFile(id){const d=await db();return new Promise((res,rej)=>{const r=d.transaction(STORE,'readwrite').objectStore(STORE).delete(id);r.onsuccess=()=>res();r.onerror=()=>rej(r.error);});}
-  async function renameFile(id,name){const d=await db();return new Promise((res,rej)=>{const tx=d.transaction(STORE,'readwrite'),store=tx.objectStore(STORE),req=store.get(Number(id));req.onsuccess=()=>{const f=req.result;if(!f){rej(new Error('File not found'));return;}f.name=name;const put=store.put(f);put.onsuccess=()=>res(f);put.onerror=()=>rej(put.error)};req.onerror=()=>rej(req.error);tx.onerror=()=>rej(tx.error);});}
+  async function getFile(id){await migrateLegacyIfFirstAccount();const d=await db();return new Promise((res,rej)=>{const r=d.transaction(STORE,'readonly').objectStore(STORE).get(id);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+  async function deleteFile(id){await migrateLegacyIfFirstAccount();const d=await db();return new Promise((res,rej)=>{const r=d.transaction(STORE,'readwrite').objectStore(STORE).delete(id);r.onsuccess=()=>res();r.onerror=()=>rej(r.error);});}
+  async function renameFile(id,name){await migrateLegacyIfFirstAccount();const d=await db();return new Promise((res,rej)=>{const tx=d.transaction(STORE,'readwrite'),store=tx.objectStore(STORE),req=store.get(Number(id));req.onsuccess=()=>{const f=req.result;if(!f){rej(new Error('File not found'));return;}f.name=name;const put=store.put(f);put.onsuccess=()=>res(f);put.onerror=()=>rej(put.error)};req.onerror=()=>rej(req.error);tx.onerror=()=>rej(tx.error);});}
   function esc(x){return String(x).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
   function fmt(n){if(n<1024)return n+' B';if(n<1048576)return (n/1024).toFixed(1)+' KB';if(n<1073741824)return (n/1048576).toFixed(1)+' MB';return (n/1073741824).toFixed(1)+' GB';}
   function ico(t){let p=t.startsWith('image/')?'<path d="M4 5h16v14H4z"/><circle cx="9" cy="10" r="1.5"/><path d="m5 17 4-4 3 3 2-2 5 3"/>':t.startsWith('video/')?'<rect x="3" y="5" width="13" height="14" rx="2"/><path d="m16 10 5-3v10l-5-3z"/>':'<path d="M7 3h7l4 4v14H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5"/>';return '<svg viewBox="0 0 24 24" style="width:24px;height:24px;fill:none;stroke:#314D87;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;">'+p+'</svg>';}
@@ -5927,10 +5968,200 @@ hr{display:none!important;border:0!important;height:0!important;margin:0!importa
 })();
 </script>
 
+
+<style id="taraju-personal-store-organizer-css">
+#personal-store-organizer{margin-top:14px}
+.pso-dashboard{background:var(--bg-card);border:1px solid rgba(49,77,135,.14);border-radius:20px;box-shadow:var(--shadow-card);padding:14px}
+.pso-dashboard-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.pso-kicker{font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-secondary);font-weight:800}
+.pso-title{margin:2px 0 3px;font-size:1.08rem;font-weight:900;color:var(--text-primary)}
+.pso-sub{font-size:.74rem;color:var(--text-secondary);line-height:1.35}
+.pso-lock-btn{border:0;border-radius:12px;background:rgba(198,40,40,.10);color:#b3261e;display:inline-flex;align-items:center;gap:6px;padding:10px 12px;font-weight:800;cursor:pointer}
+.pso-lock-btn svg,.pso-tool svg,.pso-section-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.pso-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}
+.pso-stat{background:var(--bg-blue);border-radius:14px;padding:10px;min-width:0}
+.pso-stat strong{display:block;font-size:1.02rem;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pso-stat span{display:block;margin-top:2px;font-size:.68rem;color:var(--text-secondary)}
+.pso-search-row{display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap}
+.pso-search{flex:1 1 220px;position:relative}
+.pso-search input{width:100%;height:44px;padding:0 40px 0 40px;border:1px solid rgba(49,77,135,.18);border-radius:13px;background:var(--bg-card);color:var(--text-primary);outline:none;font:inherit}
+.pso-search svg{position:absolute;left:13px;top:12px;width:20px;height:20px;fill:none;stroke:var(--text-secondary);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.pso-search button{position:absolute;right:7px;top:7px;width:30px;height:30px;border:0;border-radius:9px;background:var(--bg-blue);color:var(--text-secondary);display:none;align-items:center;justify-content:center;cursor:pointer}
+.pso-search.has-value button{display:flex}
+.pso-search button svg{position:static;width:16px;height:16px;stroke:currentColor}
+.pso-select{height:44px;border:1px solid rgba(49,77,135,.18);border-radius:13px;background:var(--bg-card);color:var(--text-primary);padding:0 11px;font:inherit;outline:none;min-width:108px}
+.pso-tools{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.pso-tool{border:1px solid rgba(49,77,135,.12);border-radius:13px;background:var(--bg-card);color:var(--text-primary);padding:10px 9px;display:flex;align-items:center;justify-content:center;gap:7px;font-weight:800;cursor:pointer;min-height:46px}
+.pso-tool.active{background:var(--royal-blue);border-color:var(--royal-blue);color:#fff}
+.pso-section{margin-top:12px}
+.pso-section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px}
+.pso-section-title{font-size:.9rem;font-weight:900;color:var(--text-primary)}
+.pso-section-count{font-size:.68rem;color:var(--text-secondary);font-weight:800}
+.pso-quick{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.pso-quick-card{display:flex;align-items:center;gap:9px;border:1px solid rgba(49,77,135,.12);background:var(--bg-card);border-radius:14px;padding:9px;cursor:pointer;min-width:0}
+.pso-quick-card .icon{width:36px;height:36px;border-radius:10px;background:var(--bg-blue);display:flex;align-items:center;justify-content:center;flex:0 0 36px;color:#314D87}
+.pso-quick-card .icon svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.pso-quick-copy{min-width:0}.pso-quick-copy strong{display:block;font-size:.75rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pso-quick-copy span{display:block;margin-top:2px;font-size:.63rem;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pso-empty-mini{text-align:center;padding:10px;border:1px dashed rgba(49,77,135,.18);border-radius:12px;color:var(--text-secondary);font-size:.7rem}
+.personal-store-favorite-btn{width:40px;height:40px;min-width:40px;border:0;border-radius:12px;background:var(--bg-blue);color:#314D87;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.personal-store-favorite-btn.active{color:#d59b00;background:rgba(213,155,0,.12)}
+.personal-store-favorite-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.pso-favorite-menu-btn{display:flex!important}
+.pso-hidden{display:none!important}
+@media(max-width:620px){.pso-stats{grid-template-columns:repeat(2,1fr)}.pso-tools{grid-template-columns:1fr 1fr}.pso-tools .pso-tool:last-child{grid-column:1/-1}.pso-quick{grid-template-columns:1fr}.pso-select{flex:1 1 110px}.pso-dashboard{padding:12px}}
+.dark-mode .pso-search input,.dark-mode .pso-select{border-color:#3a4656}.dark-mode .pso-dashboard{border-color:rgba(255,255,255,.10)}
+</style>
+
+
+<script id="taraju-personal-store-organizer-js">
+(function(){
+  'use strict';
+  const BASE_DB='taraju_personal_store_v1', STORE='files';
+  const BASE_FAVORITES_KEY='taraju_personal_store_favorites_v2';
+  const BASE_RECENT_KEY='taraju_personal_store_recent_v2';
+  const BASE_AUTOLOCK_KEY='taraju_personal_store_autolock_v1';
+  const accountKey=base=>(window.TarajuAccountScope?.key?.(base)||base+'__guest');
+  const DB=()=>BASE_DB+'__'+(window.TarajuAccountScope?.scope?.()||'guest');
+  const FAVORITES_KEY=()=>accountKey(BASE_FAVORITES_KEY), RECENT_KEY=()=>accountKey(BASE_RECENT_KEY), AUTOLOCK_KEY=()=>accountKey(BASE_AUTOLOCK_KEY);
+  let lockTimer=null, currentMode='all', searchText='';
+  const $=id=>document.getElementById(id);
+  window.TarajuAccountScope?.onChange?.(()=>{currentMode='all';searchText='';try{render()}catch(e){}});
+  const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+  function getJson(key, fallback){try{const x=JSON.parse(localStorage.getItem(key)||'null');return x??fallback}catch(e){return fallback}}
+  function setJson(key,val){try{localStorage.setItem(key,JSON.stringify(val))}catch(e){}}
+  function favMap(){return getJson(FAVORITES_KEY(),{})}
+  function recentList(){return getJson(RECENT_KEY(),[])}
+  function isFav(id){return !!favMap()[String(id)]}
+  function setFav(id,on){const m=favMap();if(on)m[String(id)]=Date.now();else delete m[String(id)];setJson(FAVORITES_KEY(),m)}
+  function markRecent(id){let a=recentList().filter(x=>String(x.id)!==String(id));a.unshift({id:Number(id),at:Date.now()});setJson(RECENT_KEY(),a.slice(0,20))}
+  function fileDb(){return new Promise((resolve,reject)=>{const r=indexedDB.open(DB(),1);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)})}
+  async function files(){const d=await fileDb();return new Promise((res,rej)=>{const r=d.transaction(STORE,'readonly').objectStore(STORE).getAll();r.onsuccess=()=>res(r.result||[]);r.onerror=()=>rej(r.error)})}
+  async function getFile(id){const d=await fileDb();return new Promise((res,rej)=>{const r=d.transaction(STORE,'readonly').objectStore(STORE).get(Number(id));r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+  function fmt(n){if(n<1024)return n+' B';if(n<1048576)return (n/1024).toFixed(1)+' KB';if(n<1073741824)return (n/1048576).toFixed(1)+' MB';return (n/1073741824).toFixed(1)+' GB'}
+  function typeLabel(type,name){const n=String(name||'').toLowerCase();if(type&&type.startsWith('image/'))return 'Image';if(type&&type.startsWith('video/'))return 'Video';if(type==='application/pdf'||/\.pdf$/i.test(n))return 'PDF';if(type&&type.includes('sheet')||/\.(xls|xlsx|csv)$/i.test(n))return 'Spreadsheet';if(type&&type.includes('word')||/\.(doc|docx|rtf|txt)$/i.test(n))return 'Document';if(type&&type.includes('presentation')||/\.(ppt|pptx)$/i.test(n))return 'Presentation';if(type&&type.includes('zip')||/\.(zip)$/i.test(n))return 'Archive';return 'File'}
+  function icon(type){const p=type==='Image'?'<rect x="4" y="5" width="16" height="14" rx="2"></rect><circle cx="9" cy="10" r="1.4"></circle><path d="m5 17 4-4 3 3 2-2 5 3"></path>':type==='Video'?'<rect x="3" y="5" width="13" height="14" rx="2"></rect><path d="m16 10 5-3v10l-5-3z"></path>':type==='PDF'?'<path d="M7 3h7l4 4v14H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"></path><path d="M14 3v5h5"></path><path d="M9 13h6M9 17h4"></path>':'<path d="M7 3h7l4 4v14H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"></path><path d="M14 3v5h5"></path>';return '<svg viewBox="0 0 24 24"><g>'+p+'</g></svg>'}
+  function eye(){return '<svg viewBox="0 0 24 24"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.5"></circle></svg>'}
+  function star(){return '<svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z"></path></svg>'}
+  function ensureUi(){
+    const screen=$('screen-personal-store'); if(!screen||$('personal-store-organizer'))return;
+    const host=screen.querySelector('.private-folder-card'); if(!host||!host.parentElement)return;
+    const box=document.createElement('section');box.id='personal-store-organizer';
+    box.innerHTML=`<div class="pso-dashboard">
+      <div class="pso-dashboard-head"><div><div class="pso-kicker">Private workspace</div><div class="pso-title">Personal Store Dashboard</div><div class="pso-sub">Your files, favorites and recent items in one place.</div></div><button type="button" class="pso-lock-btn" id="pso-lock-now"><svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg><span>Lock Now</span></button></div>
+      <div class="pso-stats"><div class="pso-stat"><strong id="pso-file-count">0</strong><span>Files</span></div><div class="pso-stat"><strong id="pso-fav-count">0</strong><span>Favorites</span></div><div class="pso-stat"><strong id="pso-recent-count">0</strong><span>Recent</span></div><div class="pso-stat"><strong id="pso-storage">0 B</strong><span>Storage</span></div></div>
+      <div class="pso-search-row"><div class="pso-search" id="pso-search-wrap"><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"></circle><path d="m16 16 5 5"></path></svg><input id="pso-search" type="search" placeholder="Search files…" autocomplete="off"><button id="pso-search-clear" type="button" aria-label="Clear search"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></div><select id="pso-filter" class="pso-select" aria-label="Filter files"><option value="all">All types</option><option value="Image">Images</option><option value="Video">Videos</option><option value="PDF">PDF</option><option value="Document">Documents</option><option value="Spreadsheet">Spreadsheets</option><option value="Presentation">Presentations</option><option value="Archive">Archives</option><option value="Favorites">Favorites</option><option value="Recent">Recent</option></select><select id="pso-sort" class="pso-select" aria-label="Sort files"><option value="newest">Newest</option><option value="oldest">Oldest</option><option value="name-asc">Name A–Z</option><option value="name-desc">Name Z–A</option><option value="largest">Largest</option><option value="smallest">Smallest</option></select></div>
+      <div class="pso-tools"><button type="button" class="pso-tool" id="pso-favorites-btn"><svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z"></path></svg>Favorites</button><button type="button" class="pso-tool" id="pso-recent-btn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3.5 2"></path></svg>Recent</button><button type="button" class="pso-tool" id="pso-secure-copy"><svg viewBox="0 0 24 24"><rect x="6" y="4" width="12" height="16" rx="2"></rect><path d="M9 8h6M9 12h6M9 16h4"></path></svg>Secure Clipboard</button><label class="pso-tool" style="cursor:pointer;gap:8px;"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7v5l3 2"></path></svg><span>Auto Lock</span><select id="pso-autolock" style="border:0;background:transparent;color:inherit;font:inherit;font-weight:800;outline:none;min-width:72px;"><option value="0">Off</option><option value="5">5m</option><option value="15">15m</option><option value="30">30m</option><option value="60">60m</option></select></label></div>
+      <div class="pso-section"><div class="pso-section-head"><div class="pso-section-title">Quick Access</div><div class="pso-section-count" id="pso-quick-count">0 items</div></div><div class="pso-quick" id="pso-quick-list"></div></div>
+    </div>`;
+    host.parentElement.insertBefore(box,host);
+    $('pso-lock-now')?.addEventListener('click',lockNow);
+    $('pso-search')?.addEventListener('input',e=>{searchText=e.target.value.trim().toLowerCase();$('pso-search-wrap')?.classList.toggle('has-value',!!searchText);applyOrganizer();});
+    $('pso-search-clear')?.addEventListener('click',()=>{if($('pso-search'))$('pso-search').value='';searchText='';$('pso-search-wrap')?.classList.remove('has-value');applyOrganizer();});
+    $('pso-filter')?.addEventListener('change',e=>{currentMode=e.target.value;document.querySelectorAll('.pso-tool').forEach(x=>x.classList.remove('active'));if(currentMode==='Favorites')$('pso-favorites-btn')?.classList.add('active');if(currentMode==='Recent')$('pso-recent-btn')?.classList.add('active');applyOrganizer();});
+    $('pso-sort')?.addEventListener('change',applyOrganizer);
+    $('pso-favorites-btn')?.addEventListener('click',()=>{if($('pso-filter'))$('pso-filter').value='Favorites';currentMode='Favorites';document.querySelectorAll('.pso-tool').forEach(x=>x.classList.remove('active'));$('pso-favorites-btn')?.classList.add('active');applyOrganizer();});
+    $('pso-recent-btn')?.addEventListener('click',()=>{if($('pso-filter'))$('pso-filter').value='Recent';currentMode='Recent';document.querySelectorAll('.pso-tool').forEach(x=>x.classList.remove('active'));$('pso-recent-btn')?.classList.add('active');applyOrganizer();});
+    $('pso-secure-copy')?.addEventListener('click',openSecureClipboard);
+    const auto=$('pso-autolock'); if(auto){auto.value=localStorage.getItem(AUTOLOCK_KEY())||'0';auto.addEventListener('change',()=>{localStorage.setItem(AUTOLOCK_KEY(),auto.value);autoLockSetup();});}
+    renderDashboardStats();
+  }
+  function openSecureClipboard(){
+    const id='psoSecureClipboardModal';if($(id)){$(id).classList.add('active');$('psoClipboardText')?.focus();return;}
+    const m=document.createElement('div');m.id=id;m.className='modal-overlay active';m.style.zIndex='18000';m.innerHTML='<div class="modal-content" style="max-width:520px;width:calc(100% - 28px);padding:22px;"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;"><h3 style="margin:0">Secure Clipboard</h3><button type="button" id="psoClipboardClose" class="btn-close-modal" style="width:40px;height:40px;padding:0;font-size:20px;display:flex;align-items:center;justify-content:center">×</button></div><p style="color:var(--text-secondary);font-size:.82rem;line-height:1.45;margin:8px 0 12px;">Copy temporary text without saving it to the Personal Store. Clipboard is cleared automatically after 30 seconds when supported.</p><textarea id="psoClipboardText" style="width:100%;min-height:140px;box-sizing:border-box;border:2px solid rgba(49,77,135,.18);border-radius:14px;padding:12px;background:var(--bg-card);color:var(--text-primary);font:inherit;resize:vertical" placeholder="Enter private text…"></textarea><button type="button" id="psoClipboardCopy" class="btn-primary" style="width:100%;margin-top:12px">Copy to Clipboard</button><div id="psoClipboardStatus" style="min-height:20px;margin-top:8px;font-size:.76rem;color:var(--text-secondary)"></div></div>';
+    document.body.appendChild(m);$('psoClipboardClose').onclick=()=>m.remove();m.addEventListener('click',e=>{if(e.target===m)m.remove()});$('psoClipboardCopy').onclick=async()=>{const text=$('psoClipboardText').value;if(!text)return;$('psoClipboardStatus').textContent='';try{await navigator.clipboard.writeText(text);$('psoClipboardStatus').textContent='Copied. Clipboard clear will be attempted after 30 seconds.';setTimeout(async()=>{try{const current=await navigator.clipboard.readText();if(current===text)await navigator.clipboard.writeText('')}catch(e){}},30000)}catch(e){$('psoClipboardStatus').textContent='Clipboard permission is unavailable on this device.'}};
+    $('psoClipboardText').focus();
+  }
+  function lockNow(){
+    try{window.TarajuPersonalStoreSessionPassword='';}catch(e){}
+    const viewer=$('personalStoreViewer');if(viewer&&viewer.classList.contains('active')&&window.closePersonalStoreViewer)window.closePersonalStoreViewer();
+    if(typeof limitedNavTo==='function')limitedNavTo('screen-home'); else if(typeof navigateTo==='function')navigateTo('screen-home');
+  }
+  function autoLockSetup(){
+    const val=parseInt(localStorage.getItem(AUTOLOCK_KEY())||'0',10);if(!val){if(lockTimer)clearTimeout(lockTimer);return}if(lockTimer)clearTimeout(lockTimer);lockTimer=setTimeout(()=>{lockNow();},val*60000);
+  }
+  let activityResetQueued=false;
+  function noteActivity(){if(activityResetQueued)return;activityResetQueued=true;setTimeout(()=>{activityResetQueued=false;autoLockSetup()},80)}
+  function fileRows(){return [...document.querySelectorAll('#personal-store-list > .personal-store-item-wrap')];}
+  function rowId(row){return row.querySelector('[data-id]')?.dataset.id||''}
+  function decorateFileRows(){
+    fileRows().forEach(row=>{
+      const id=rowId(row);if(!id)return;let actions=row.querySelector('.personal-store-menu');if(actions && !actions.querySelector('[data-store-action="share"]')){const del=actions.querySelector('[data-store-action="delete"]');const share=document.createElement('button');share.type='button';share.dataset.storeAction='share';share.dataset.id=id;share.innerHTML='<svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.5"></circle><circle cx="6" cy="12" r="2.5"></circle><circle cx="18" cy="19" r="2.5"></circle><path d="m8.2 10.9 7.5-4.7M8.2 13.1l7.5 4.7"></path></svg><span>Share</span>';actions.insertBefore(share,del||null)}if(actions && !actions.querySelector('[data-store-action="favorite"]')){const fav=document.createElement('button');fav.type='button';fav.dataset.storeAction='favorite';fav.dataset.id=id;fav.innerHTML=star()+'<span>Favorite</span>';actions.insertBefore(fav,actions.querySelector('[data-store-action="delete"]')||null)}
+      let favBtn=row.querySelector('.personal-store-favorite-btn');if(!favBtn){const view=row.querySelector('[data-store-action="view"]');favBtn=document.createElement('button');favBtn.type='button';favBtn.className='personal-store-favorite-btn';favBtn.setAttribute('aria-label','Favorite');favBtn.title='Favorite';favBtn.dataset.psoFavorite=id;favBtn.innerHTML=star();if(view)view.insertAdjacentElement('beforebegin',favBtn)}favBtn.classList.toggle('active',isFav(id));
+    });
+  }
+  async function renderQuickAccess(all){
+    const el=$('pso-quick-list'),count=$('pso-quick-count');if(!el)return;const recent=recentList();const recentIds=new Set(recent.map(x=>String(x.id)));const favIds=new Set(Object.keys(favMap()));let picks=[];
+    for(const f of all){if(favIds.has(String(f.id)))picks.push(f)}
+    for(const f of [...all].sort((a,b)=>b.createdAt-a.createdAt)){if(picks.length>=4)break;if(!picks.some(x=>x.id===f.id))picks.push(f)}
+    if(!picks.length){el.innerHTML='<div class="pso-empty-mini">Add a file or mark one as Favorite to create Quick Access.</div>';if(count)count.textContent='0 items';return}
+    el.innerHTML=picks.slice(0,4).map(f=>{const t=typeLabel(f.type,f.name);return `<button type="button" class="pso-quick-card" data-pso-open="${f.id}"><span class="icon">${icon(t)}</span><span class="pso-quick-copy"><strong>${esc(f.name)}</strong><span>${t} · ${fmt(f.size)}${recentIds.has(String(f.id))?' · Recent':''}</span></span></button>`}).join('');if(count)count.textContent=picks.length+' items';
+    el.querySelectorAll('[data-pso-open]').forEach(b=>b.addEventListener('click',async()=>{const f=await getFile(b.dataset.psoOpen);if(f){markRecent(f.id);if(window.__tarajuOpenPersonalFile)window.__tarajuOpenPersonalFile(f)}}));
+  }
+  async function applyOrganizer(){
+    const all=await files();const list=$('personal-store-list');if(!list)return;const sort=$('pso-sort')?.value||'newest';const mode=currentMode;const rec=new Set(recentList().map(x=>String(x.id)));
+    let rows=fileRows().map(row=>({row,id:rowId(row),text:(row.textContent||'').toLowerCase(),type:typeLabel('',row.querySelector('[data-store-action="view"]')?.dataset.name||'')}));
+    // derive actual file metadata from the indexed DB for robust filtering and sorting
+    const meta=new Map(all.map(f=>[String(f.id),f]));
+    rows=rows.filter(x=>meta.has(x.id));
+    rows.forEach(x=>{const f=meta.get(x.id);x.f=f;x.kind=typeLabel(f.type,f.name)});
+    rows=rows.filter(x=>{if(searchText&&!(`${x.f.name} ${x.kind} ${x.f.type||''}`.toLowerCase().includes(searchText)))return false;if(mode==='Favorites'&&!isFav(x.id))return false;if(mode==='Recent'&&!rec.has(x.id))return false;if(mode!=='all'&&mode!=='Favorites'&&mode!=='Recent'&&x.kind!==mode)return false;return true});
+    rows.sort((a,b)=>{const A=a.f,B=b.f;if(sort==='oldest')return A.createdAt-B.createdAt;if(sort==='name-asc')return String(A.name).localeCompare(String(B.name),undefined,{numeric:true,sensitivity:'base'});if(sort==='name-desc')return String(B.name).localeCompare(String(A.name),undefined,{numeric:true,sensitivity:'base'});if(sort==='largest')return (B.size||0)-(A.size||0);if(sort==='smallest')return (A.size||0)-(B.size||0);return B.createdAt-A.createdAt});
+    const parent=list;rows.forEach(x=>parent.appendChild(x.row));fileRows().forEach(row=>row.classList.toggle('pso-hidden',!rows.some(x=>x.row===row)));
+    decorateFileRows();renderDashboardStats();renderQuickAccess(all);
+  }
+  async function renderDashboardStats(){try{const all=await files();$('pso-file-count').textContent=all.length;const favs=Object.keys(favMap()).filter(id=>all.some(f=>String(f.id)===id));$('pso-fav-count').textContent=favs.length;$('pso-recent-count').textContent=Math.min(recentList().length,all.length);$('pso-storage').textContent=fmt(all.reduce((n,f)=>n+(Number(f.size)||0),0))}catch(e){}}
+  function bindDelegation(){
+    ['pointerdown','keydown','touchstart'].forEach(ev=>document.addEventListener(ev,()=>{if(window.TarajuPersonalStoreSessionPassword)noteActivity()},{passive:true}));
+    document.addEventListener('click',async e=>{
+    document.addEventListener('click',async e=>{
+      const act=e.target.closest?.('[data-store-action="share"]');
+      if(!act)return;
+      e.preventDefault();e.stopImmediatePropagation();
+      const f=await getFile(act.dataset.id);if(!f)return;
+      try{
+        const sf=typeof File!=='undefined'?new File([f.blob],f.name,{type:f.type||'application/octet-stream'}):null;
+        if(sf&&navigator.canShare&&navigator.canShare({files:[sf]})){await navigator.share({title:f.name,files:[sf]});}
+        else if(navigator.share){await navigator.share({title:f.name,text:f.name});}
+        else if(navigator.clipboard){await navigator.clipboard.writeText(f.name);alert('File name copied to clipboard.');}
+      }catch(err){}
+    },true);
+      const fav=e.target.closest?.('.personal-store-favorite-btn,[data-store-action="favorite"]');if(fav){e.preventDefault();e.stopPropagation();const id=fav.dataset.psoFavorite||fav.dataset.id;setFav(id,!isFav(id));decorateFileRows();renderDashboardStats();applyOrganizer();return}
+      const quick=e.target.closest?.('[data-pso-open]');
+      const act=e.target.closest?.('[data-store-action]');if(act){const action=act.dataset.storeAction,id=act.dataset.id;if(action==='view')markRecent(id);if(action==='share'){const f=await getFile(id);if(!f)return;try{if(navigator.share){await navigator.share({title:f.name,text:f.name})}else{await navigator.clipboard.writeText(f.name);alert('File name copied to clipboard.')}}catch(err){}e.preventDefault();e.stopImmediatePropagation();return}}
+      if(quick){e.stopPropagation();return}
+    },true);
+    // private-folder favorite buttons are injected into its existing three-dot menus without changing its data layer
+    const obs=new MutationObserver(()=>decoratePrivateFolderMenus());obs.observe(document.body,{subtree:true,childList:true});
+  }
+  function pfKey(type,el){const strong=el.querySelector('strong')?.textContent||'';const small=el.querySelector('small')?.textContent||'';const p=el.querySelector('p')?.textContent||'';return `pf:${type}:${strong}|${small}|${p}`}
+  function decoratePrivateFolderMenus(){
+    ['contacts','notes','texts'].forEach(type=>{const list=$(`pf-${type.slice(0,-1)}-list`) || $(`pf-${type}-list`);if(!list)return;list.querySelectorAll('.pf-item').forEach(item=>{const menu=item.querySelector('.pf-menu');if(!menu||menu.querySelector('[data-pf-favorite]'))return;const key=pfKey(type,item);const btn=document.createElement('button');btn.type='button';btn.dataset.pfFavorite=key;btn.innerHTML=star()+'<span>Favorite</span>';menu.insertBefore(btn,menu.querySelector('[data-pf-menu-danger]')||menu.lastElementChild);btn.addEventListener('click',ev=>{ev.stopPropagation();const m=getJson(FAVORITES_KEY(),{__private__: {}});const pf=Object.assign({},m.__private__||{});pf[key]=!pf[key];m.__private__=pf;setJson(FAVORITES_KEY(),m);btn.classList.toggle('active',!!pf[key]);});});});
+  }
+  function install(){ensureUi();bindDelegation();autoLockSetup();const refresh=window.TarajuPersonalStoreRefresh;if(refresh&&!refresh.__psoWrapped){const wrapped=async()=>{await refresh();ensureUi();decorateFileRows();renderDashboardStats();applyOrganizer();autoLockSetup()};wrapped.__psoWrapped=true;window.TarajuPersonalStoreRefresh=wrapped;setTimeout(wrapped,250)}else{setTimeout(()=>{decorateFileRows();renderDashboardStats();applyOrganizer()},500)};window.addEventListener('pagehide',()=>{if(lockTimer)clearTimeout(lockTimer)});}
+  document.addEventListener('DOMContentLoaded',install);
+  window.__tarajuPersonalStoreOrganizerReady=true;
+})();
+</script>
+
+
+<script id="taraju-personal-store-organizer-bridge">
+(function(){
+  function openFile(f){
+    try{
+      if(typeof window.closePersonalStoreViewer==='function' && typeof window.TarajuPersonalStoreRefresh==='function'){}
+      // The base Personal Store viewer function is private, so synthesize the existing view button click safely.
+      const row=[...document.querySelectorAll('#personal-store-list .personal-store-item-wrap')].find(r=>String(r.querySelector('[data-id]')?.dataset.id)===String(f.id));
+      row?.querySelector('[data-store-action="view"]')?.click();
+    }catch(e){console.error('Personal Store quick access open failed',e)}
+  }
+  window.__tarajuOpenPersonalFile=openFile;
+})();
+</script>
+
 <style id="taraju-private-folder-css">
 .private-folder-card{margin-top:14px;background:linear-gradient(135deg,var(--bg-card),var(--bg-blue));border:1.5px solid rgba(49,77,135,.18);border-radius:20px;padding:14px;box-shadow:var(--shadow-card);}
 .private-folder-head{display:flex;align-items:center;gap:11px;min-width:0}.private-folder-icon{width:46px;height:46px;border-radius:14px;background:rgba(49,77,135,.12);color:#314D87;display:flex;align-items:center;justify-content:center;flex:0 0 46px}.private-folder-icon svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.private-folder-copy{min-width:0;flex:1}.private-folder-copy strong{display:block;font-size:.98rem;font-weight:800}.private-folder-copy span{display:block;color:var(--text-secondary);font-size:.72rem;line-height:1.35;margin-top:3px}.private-folder-open{border:0;border-radius:12px;background:var(--golden-yellow);color:#171717;font-weight:800;padding:10px 13px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;flex:0 0 auto}.private-folder-open svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}.private-folder-stats{margin-top:10px;color:var(--text-secondary);font-size:.72rem;font-weight:700}.dark-mode .private-folder-card{border-color:rgba(255,255,255,.12)}
-.pf-modal{position:fixed;inset:0;z-index:15000;background:rgba(0,0,0,.62);display:none;align-items:center;justify-content:center;padding:16px}.pf-modal.active{display:flex}.pf-card{width:min(720px,100%);max-height:88vh;overflow:auto;background:var(--bg-card);color:var(--text-primary);border-radius:24px;box-shadow:0 25px 70px rgba(0,0,0,.35);padding:18px}.pf-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}.pf-head h3{margin:0;font-size:1.25rem}.pf-close{width:38px;height:38px;border:0;border-radius:50%;background:var(--bg-blue);color:var(--text-primary);cursor:pointer;font-size:20px}.pf-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}.pf-tab{border:1px solid #d8dce5;background:var(--bg-card);color:var(--text-primary);border-radius:12px;padding:11px 6px;font-weight:800;cursor:pointer}.pf-tab.active{background:var(--royal-blue);color:#fff;border-color:var(--royal-blue)}.pf-pane{display:none}.pf-pane.active{display:block}.pf-form{display:grid;gap:9px}.pf-form input,.pf-form textarea{width:100%;box-sizing:border-box;border:2px solid #e0e0e0;border-radius:12px;padding:12px 13px;background:var(--bg-card);color:var(--text-primary);font:inherit;outline:none}.pf-form textarea{min-height:110px;resize:vertical}.pf-form input:focus,.pf-form textarea:focus{border-color:var(--golden-yellow)}.pf-primary{border:0;border-radius:12px;background:var(--golden-yellow);color:#161616;padding:12px;font-weight:800;cursor:pointer}.pf-list{display:grid;gap:8px;margin-top:12px}.pf-item{padding:12px;border:1px solid rgba(100,110,125,.2);border-radius:13px;background:var(--bg-card)}.pf-item-top{display:flex;justify-content:space-between;gap:8px}.pf-item strong{font-size:.9rem}.pf-item small{color:var(--text-secondary)}.pf-item p{margin:6px 0 0;white-space:pre-wrap;word-break:break-word;color:var(--text-secondary);font-size:.82rem;line-height:1.45}.pf-delete{border:0;background:#e53935;color:#fff;border-radius:9px;padding:6px 9px;font-weight:700;cursor:pointer}.pf-empty{text-align:center;color:var(--text-secondary);padding:18px 8px;font-size:.82rem}.pf-security-note{margin-top:12px;padding:10px 12px;border-radius:12px;background:rgba(46,125,50,.08);color:var(--text-secondary);font-size:.72rem;line-height:1.45}.dark-mode .pf-form input,.dark-mode .pf-form textarea{border-color:#444}.dark-mode .pf-tab{border-color:#444}
+.pf-modal{position:fixed;inset:0;z-index:15000;background:rgba(0,0,0,.62);display:none;align-items:center;justify-content:center;padding:16px}.pf-modal.active{display:flex}.pf-card{width:min(720px,100%);max-height:88vh;overflow:auto;background:var(--bg-card);color:var(--text-primary);border-radius:24px;box-shadow:0 25px 70px rgba(0,0,0,.35);padding:18px}.pf-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}.pf-head h3{margin:0;font-size:1.25rem}.pf-close{width:38px;height:38px;border:0;border-radius:50%;background:var(--bg-blue);color:var(--text-primary);cursor:pointer;font-size:20px}.pf-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}.pf-tab{border:1px solid #d8dce5;background:var(--bg-card);color:var(--text-primary);border-radius:12px;padding:11px 6px;font-weight:800;cursor:pointer}.pf-tab.active{background:var(--royal-blue);color:#fff;border-color:var(--royal-blue)}.pf-pane{display:none}.pf-pane.active{display:block}.pf-form{display:grid;gap:9px}.pf-form input,.pf-form textarea{width:100%;box-sizing:border-box;border:2px solid #e0e0e0;border-radius:12px;padding:12px 13px;background:var(--bg-card);color:var(--text-primary);font:inherit;outline:none}.pf-form textarea{min-height:110px;resize:vertical}.pf-form input:focus,.pf-form textarea:focus{border-color:var(--golden-yellow)}.pf-primary{border:0;border-radius:12px;background:var(--golden-yellow);color:#161616;padding:12px;font-weight:800;cursor:pointer}.pf-list{display:grid;gap:8px;margin-top:12px}.pf-item{padding:12px;border:1px solid rgba(100,110,125,.2);border-radius:13px;background:var(--bg-card)}.pf-item-top{display:flex;align-items:center;justify-content:space-between;gap:8px}.pf-item-heading{min-width:0;flex:1}.pf-item strong{font-size:.9rem}.pf-item small{display:block;color:var(--text-secondary);margin-top:4px}.pf-item p{margin:6px 0 0;white-space:pre-wrap;word-break:break-word;color:var(--text-secondary);font-size:.82rem;line-height:1.45}.pf-item-actions{display:flex;align-items:center;gap:7px;flex:0 0 auto}.pf-call,.pf-whatsapp{width:38px;height:38px;border:0;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;text-decoration:none}.pf-call{background:#e8f5e9;color:#2e7d32}.pf-whatsapp{background:#e8f5e9;color:#25D366}.pf-call svg,.pf-whatsapp svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.pf-whatsapp svg .wa-fill{fill:currentColor;stroke:none}.pf-more{width:38px;height:38px;border:0;border-radius:10px;background:var(--bg-blue);color:#314D87;display:flex;align-items:center;justify-content:center;cursor:pointer}.pf-more svg{width:19px;height:19px;fill:currentColor}.pf-item-menu{position:relative}.pf-menu{position:absolute;right:0;top:44px;z-index:20;width:165px;padding:6px;border:1px solid rgba(49,77,135,.15);border-radius:14px;background:var(--bg-card);box-shadow:0 12px 28px rgba(0,0,0,.18);display:none}.pf-menu.active{display:block}.pf-menu button{width:100%;display:flex;align-items:center;gap:9px;border:0;background:transparent;color:var(--text-primary);padding:10px 11px;border-radius:10px;font-weight:700;cursor:pointer;text-align:left}.pf-menu button:hover,.pf-menu button:active{background:var(--bg-blue)}.pf-menu button.pf-menu-danger{color:#c62828}.pf-menu svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:0 0 17px}.pf-empty{text-align:center;color:var(--text-secondary);padding:18px 8px;font-size:.82rem}.pf-security-note{margin-top:12px;padding:10px 12px;border-radius:12px;background:rgba(46,125,50,.08);color:var(--text-secondary);font-size:.72rem;line-height:1.45}.dark-mode .pf-form input,.dark-mode .pf-form textarea{border-color:#444}.dark-mode .pf-tab{border-color:#444}.dark-mode .pf-call{background:rgba(76,175,80,.16);color:#81c784}
 @media(max-width:520px){.private-folder-copy span{font-size:.68rem}.private-folder-open{padding:9px 10px}.pf-card{padding:14px;border-radius:20px}}
 </style>
 <div class="pf-modal" id="privateFolderModal" aria-hidden="true" role="dialog" aria-modal="true">
@@ -5945,22 +6176,39 @@ hr{display:none!important;border:0!important;height:0!important;margin:0!importa
 </div>
 <script id="taraju-private-folder-js">
 (function(){
-  const DB='taraju_private_folder_v1', STORE='vault'; let dbp=null, data={contacts:[],notes:[],texts:[]}, key=null, vaultSalt=null;
+  const BASE_DB='taraju_private_folder_v1', STORE='vault'; let dbp=null, dbScope='', data={contacts:[],notes:[],texts:[]}, key=null, vaultSalt=null;
+  const accountScope=()=>window.TarajuAccountScope?.scope?.()||'guest';
+  function scopedDbName(){return BASE_DB+'__'+accountScope()}
+  async function migrateLegacyIfFirstAccount(){
+    if(!window.TarajuAccountScope?.authenticated?.()) return;
+    const ownerKey='taraju_private_folder_legacy_owner_v1';
+    if(localStorage.getItem(ownerKey)) return;
+    try{
+      const legacy=await new Promise((resolve,reject)=>{const r=indexedDB.open(BASE_DB,1);r.onupgradeneeded=()=>{const d=r.result;if(!d.objectStoreNames.contains(STORE))d.createObjectStore(STORE,{keyPath:'id'});};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)});
+      const rec=await new Promise((resolve,reject)=>{const r=legacy.transaction(STORE,'readonly').objectStore(STORE).get('main');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)});
+      if(rec){const target=await db();await new Promise((resolve,reject)=>{const tx=target.transaction(STORE,'readwrite');tx.objectStore(STORE).put(rec);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)});}
+      try{legacy.close()}catch(e){}
+      localStorage.setItem(ownerKey,accountScope());
+    }catch(e){}
+  }
   const $=id=>document.getElementById(id);
-  function db(){if(dbp)return dbp;dbp=new Promise((res,rej)=>{const r=indexedDB.open(DB,1);r.onupgradeneeded=()=>{const d=r.result;if(!d.objectStoreNames.contains(STORE))d.createObjectStore(STORE,{keyPath:'id'});};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});return dbp}
+  window.TarajuAccountScope?.onChange?.(()=>{dbp=null;dbScope='';key=null;vaultSalt=null;data={contacts:[],notes:[],texts:[]};});
+  function db(){const sc=accountScope();if(dbp&&dbScope===sc)return dbp;dbScope=sc;dbp=new Promise((res,rej)=>{const r=indexedDB.open(scopedDbName(),1);r.onupgradeneeded=()=>{const d=r.result;if(!d.objectStoreNames.contains(STORE))d.createObjectStore(STORE,{keyPath:'id'});};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});return dbp}
   function ab(a){return btoa(String.fromCharCode(...new Uint8Array(a)))} function ba(s){return Uint8Array.from(atob(s),c=>c.charCodeAt(0))}
   async function derive(password,salt){const base=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:150000,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
-  async function saveVault(){if(!key)return;const salt=vaultSalt || crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));vaultSalt=salt;const k=key;const cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv},k,new TextEncoder().encode(JSON.stringify(data)));const d=await db();await new Promise((res,rej)=>{const r=d.transaction(STORE,'readwrite').objectStore(STORE).put({id:'main',salt:ab(salt),iv:ab(iv),cipher:ab(cipher)});r.onsuccess=()=>res();r.onerror=()=>rej(r.error)});}
-  async function loadVault(password){const d=await db(), rec=await new Promise((res,rej)=>{const r=d.transaction(STORE,'readonly').objectStore(STORE).get('main');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});if(!rec){data={contacts:[],notes:[],texts:[]};vaultSalt=crypto.getRandomValues(new Uint8Array(16));key=await derive(password,vaultSalt);await saveVault();return true}try{vaultSalt=ba(rec.salt);key=await derive(password,vaultSalt);const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:ba(rec.iv)},key,ba(rec.cipher));data=JSON.parse(new TextDecoder().decode(plain));return true}catch(e){key=null;return false}}
+  async function saveVault(){if(!key)return;await migrateLegacyIfFirstAccount();const salt=vaultSalt || crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));vaultSalt=salt;const k=key;const cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv},k,new TextEncoder().encode(JSON.stringify(data)));const d=await db();await new Promise((res,rej)=>{const r=d.transaction(STORE,'readwrite').objectStore(STORE).put({id:'main',salt:ab(salt),iv:ab(iv),cipher:ab(cipher)});r.onsuccess=()=>res();r.onerror=()=>rej(r.error)});}
+  async function loadVault(password){await migrateLegacyIfFirstAccount();const d=await db(), rec=await new Promise((res,rej)=>{const r=d.transaction(STORE,'readonly').objectStore(STORE).get('main');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});if(!rec){data={contacts:[],notes:[],texts:[]};vaultSalt=crypto.getRandomValues(new Uint8Array(16));key=await derive(password,vaultSalt);await saveVault();return true}try{vaultSalt=ba(rec.salt);key=await derive(password,vaultSalt);const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:ba(rec.iv)},key,ba(rec.cipher));data=JSON.parse(new TextDecoder().decode(plain));return true}catch(e){key=null;return false}}
   function esc(x){return String(x??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
-  function render(){const map=[['contacts','pf-contact-list'],['notes','pf-note-list'],['texts','pf-text-list']];map.forEach(([type,id])=>{const el=$(id);if(!el)return;const arr=data[type]||[];el.innerHTML=arr.length?arr.map((x,i)=>`<div class="pf-item"><div class="pf-item-top"><strong>${esc(x.title||x.name||'Untitled')}</strong><button class="pf-delete" type="button" data-pf-delete="${type}" data-pf-index="${i}">Delete</button></div>${type==='contacts'?`<small>${esc(x.phone)}${x.extra?' · '+esc(x.extra):''}</small>`:`<p>${esc(x.body)}</p>`}</div>`).join(''):'<div class="pf-empty">Nothing saved yet.</div>'});const st=$('private-folder-stats');if(st)st.textContent=`${data.contacts.length} contacts · ${data.notes.length} notes · ${data.texts.length} texts`}
+  function whatsappNumber(phone){let d=String(phone??'').replace(/\D/g,'');if(d.length===10&&d.charAt(0)==='0')d=d.slice(1);if(d.length===10)d='91'+d;return d;}
+  function render(){const map=[['contacts','pf-contact-list'],['notes','pf-note-list'],['texts','pf-text-list']];map.forEach(([type,id])=>{const el=$(id);if(!el)return;const arr=data[type]||[];el.innerHTML=arr.length?arr.map((x,i)=>{const isContact=type==='contacts';const title=esc(x.title||x.name||'Untitled');const detail=isContact?`<small>${esc(x.phone)}${x.extra?' · '+esc(x.extra):''}</small>`:`<p>${esc(x.body)}</p>`;return `<div class="pf-item"><div class="pf-item-top"><div class="pf-item-heading"><strong>${title}</strong>${isContact?detail:''}</div><div class="pf-item-actions">${isContact?`<a class="pf-call" href="tel:${encodeURIComponent(String(x.phone||'').replace(/\s+/g,''))}" aria-label="Call ${title}" title="Call"><svg viewBox="0 0 24 24"><path d="M6.6 3.8 9 3.2a1.5 1.5 0 0 1 1.7.9l1.1 2.7a1.5 1.5 0 0 1-.4 1.7l-1.4 1.1a12.2 12.2 0 0 0 4.4 4.4l1.1-1.4a1.5 1.5 0 0 1 1.7-.4l2.7 1.1a1.5 1.5 0 0 1 .9 1.7l-.6 2.4a1.5 1.5 0 0 1-1.5 1.2C11.2 18.6 5.4 12.8 5.4 6.8A1.5 1.5 0 0 1 6.6 5.3Z"/></svg></a><a class="pf-whatsapp" href="https://wa.me/${whatsappNumber(x.phone)}" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp ${title}" title="WhatsApp"><svg viewBox="0 0 24 24"><path class="wa-fill" d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.6 21.5l4.9-1.2A9.5 9.5 0 1 0 12 2.5Zm0 17a7.5 7.5 0 0 1-3.8-1l-.3-.2-2.9.7.8-2.8-.2-.3A7.5 7.5 0 1 1 12 19.5Zm4.2-5.3c-.2-.1-1.2-.6-1.4-.7-.2-.1-.3-.1-.5.1l-.7.8c-.1.1-.2.2-.4.1a6.1 6.1 0 0 1-3-1.8 6.8 6.8 0 0 1-1.1-1.5c-.1-.2 0-.3.1-.4l.4-.5c.1-.1.1-.2.2-.3.1-.1 0-.3 0-.4l-.6-1.4c-.2-.4-.3-.4-.5-.4h-.4c-.2 0-.4.1-.5.2-.2.2-.8.8-.8 2s.8 2.3.9 2.5c.1.2 1.6 2.5 3.9 3.4 2.3.9 2.3.6 2.7.6.4 0 1.2-.5 1.4-1 .2-.5.2-.9.1-1 0-.1-.2-.2-.4-.3Z"/></svg></a>`:''}<div class="pf-item-menu"><button class="pf-more" type="button" data-pf-menu-toggle="${type}" data-pf-index="${i}" aria-label="More options" aria-expanded="false"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg></button><div class="pf-menu" data-pf-menu="${type}" data-pf-index="${i}"><button type="button" data-pf-edit="${type}" data-pf-index="${i}"><svg viewBox="0 0 24 24"><path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5.5 16.5 4 20Z"/><path d="m14.5 7.5 2 2"/></svg><span>Edit</span></button><button type="button" data-pf-share="${type}" data-pf-index="${i}"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.9 7.5-4.7M8.2 13.1l7.5 4.7"/></svg><span>Share</span></button><button class="pf-menu-danger" type="button" data-pf-delete="${type}" data-pf-index="${i}"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/></svg><span>Delete</span></button></div></div></div></div>${!isContact?detail:''}</div>`;}).join(''):'<div class="pf-empty">Nothing saved yet.</div>'});const st=$('private-folder-stats');if(st)st.textContent=`${data.contacts.length} contacts · ${data.notes.length} notes · ${data.texts.length} texts`}
   function open(){const modal=$('privateFolderModal');if(!modal)return;const pass=window.TarajuPersonalStoreSessionPassword;if(!pass){alert('Please unlock Personal Store first.');return}loadVault(pass).then(ok=>{if(!ok){alert('Private Folder could not be unlocked with the current Personal Store password.');return}render();modal.classList.add('active');modal.setAttribute('aria-hidden','false')})}
   function close(){const m=$('privateFolderModal');if(m)m.classList.remove('active');key=null;vaultSalt=null}
   $('private-folder-open')?.addEventListener('click',open);$('pf-close')?.addEventListener('click',close);$('privateFolderModal')?.addEventListener('click',e=>{if(e.target.id==='privateFolderModal')close()});
-  document.addEventListener('click',e=>{const tab=e.target.closest?.('[data-pf-tab]');if(tab){document.querySelectorAll('[data-pf-tab]').forEach(x=>x.classList.remove('active'));document.querySelectorAll('[data-pf-pane]').forEach(x=>x.classList.remove('active'));tab.classList.add('active');document.querySelector(`[data-pf-pane="${tab.dataset.pfTab}"]`)?.classList.add('active');return}const del=e.target.closest?.('[data-pf-delete]');if(del){const t=del.dataset.pfDelete,i=Number(del.dataset.pfIndex);data[t].splice(i,1);saveVault().then(render)}});
-  $('pf-contact-form')?.addEventListener('submit',e=>{e.preventDefault();data.contacts.unshift({name:$('pf-contact-name').value.trim(),phone:$('pf-contact-phone').value.trim(),extra:$('pf-contact-extra').value.trim()});e.target.reset();saveVault().then(render)});
-  $('pf-note-form')?.addEventListener('submit',e=>{e.preventDefault();data.notes.unshift({title:$('pf-note-title').value.trim(),body:$('pf-note-body').value.trim()});e.target.reset();saveVault().then(render)});
-  $('pf-text-form')?.addEventListener('submit',e=>{e.preventDefault();data.texts.unshift({title:$('pf-text-title').value.trim(),body:$('pf-text-body').value.trim()});e.target.reset();saveVault().then(render)});
+  document.addEventListener('click',e=>{const tab=e.target.closest?.('[data-pf-tab]');if(tab){document.querySelectorAll('[data-pf-tab]').forEach(x=>x.classList.remove('active'));document.querySelectorAll('[data-pf-pane]').forEach(x=>x.classList.remove('active'));tab.classList.add('active');document.querySelector(`[data-pf-pane="${tab.dataset.pfTab}"]`)?.classList.add('active');return}document.querySelectorAll('.pf-menu.active').forEach(m=>{if(!m.contains(e.target)&&!e.target.closest('[data-pf-menu-toggle]'))m.classList.remove('active')});const toggle=e.target.closest?.('[data-pf-menu-toggle]');if(toggle){e.preventDefault();e.stopPropagation();const t=toggle.dataset.pfMenuToggle,i=toggle.dataset.pfIndex;const menu=document.querySelector(`.pf-menu[data-pf-menu="${t}"][data-pf-index="${i}"]`);document.querySelectorAll('.pf-menu.active').forEach(m=>{if(m!==menu)m.classList.remove('active')});menu?.classList.toggle('active');toggle.setAttribute('aria-expanded',menu?.classList.contains('active')?'true':'false');return}const del=e.target.closest?.('[data-pf-delete]');if(del){const t=del.dataset.pfDelete,i=Number(del.dataset.pfIndex);data[t].splice(i,1);saveVault().then(render);return}const edit=e.target.closest?.('[data-pf-edit]');if(edit){const t=edit.dataset.pfEdit,i=Number(edit.dataset.pfIndex),x=data[t][i];if(!x)return;if(t==='contacts'){$('pf-contact-name').value=x.name||'';$('pf-contact-phone').value=x.phone||'';$('pf-contact-extra').value=x.extra||'';$('pf-contact-form').dataset.editIndex=i;}else if(t==='notes'){$('pf-note-title').value=x.title||'';$('pf-note-body').value=x.body||'';$('pf-note-form').dataset.editIndex=i;}else{$('pf-text-title').value=x.title||'';$('pf-text-body').value=x.body||'';$('pf-text-form').dataset.editIndex=i;}document.querySelector(`[data-pf-tab="${t}"]`)?.click();document.querySelector('.pf-menu.active')?.classList.remove('active');return}const share=e.target.closest?.('[data-pf-share]');if(share){const t=share.dataset.pfShare,i=Number(share.dataset.pfIndex),x=data[t][i];if(!x)return;const title=x.title||x.name||'Personal item';const text=t==='contacts'?[x.name||'',x.phone||'',x.extra||''].filter(Boolean).join('\n'):[x.title||'',x.body||''].filter(Boolean).join('\n');if(navigator.share){navigator.share({title,text}).catch(()=>{})}else{navigator.clipboard?.writeText(text).then(()=>alert('Details copied to clipboard.')).catch(()=>alert(text));}document.querySelector('.pf-menu.active')?.classList.remove('active');return}});
+  function finishForm(form){delete form.dataset.editIndex;form.reset();saveVault().then(render)}
+  $('pf-contact-form')?.addEventListener('submit',e=>{e.preventDefault();const i=e.target.dataset.editIndex;const item={name:$('pf-contact-name').value.trim(),phone:$('pf-contact-phone').value.trim(),extra:$('pf-contact-extra').value.trim()};if(i!==undefined){data.contacts[Number(i)]=Object.assign({},data.contacts[Number(i)]||{},item)}else data.contacts.unshift(item);finishForm(e.target)});
+  $('pf-note-form')?.addEventListener('submit',e=>{e.preventDefault();const i=e.target.dataset.editIndex;const item={title:$('pf-note-title').value.trim(),body:$('pf-note-body').value.trim()};if(i!==undefined){data.notes[Number(i)]=Object.assign({},data.notes[Number(i)]||{},item)}else data.notes.unshift(item);finishForm(e.target)});
+  $('pf-text-form')?.addEventListener('submit',e=>{e.preventDefault();const i=e.target.dataset.editIndex;const item={title:$('pf-text-title').value.trim(),body:$('pf-text-body').value.trim()};if(i!==undefined){data.texts[Number(i)]=Object.assign({},data.texts[Number(i)]||{},item)}else data.texts.unshift(item);finishForm(e.target)});
 })();
 </script>
 
@@ -6337,8 +6585,7 @@ document.addEventListener('DOMContentLoaded',function(){ if(typeof initOCRDemo==
 .photo-pdf-password-field label{display:block;margin-bottom:7px;font-weight:700;font-size:.86rem}
 .photo-pdf-password-field input{width:100%;box-sizing:border-box;min-height:50px;border:1.5px solid #d8dbe2;border-radius:13px;padding:11px 13px;background:var(--bg-card);color:var(--text-primary);font-size:1rem;outline:none}
 .photo-pdf-password-field input:focus{border-color:#314D87;box-shadow:0 0 0 3px rgba(49,77,135,.12)}
-.photo-pdf-password-show{display:flex;align-items:center;gap:8px;margin:12px 0 2px;font-size:.86rem;color:var(--text-secondary);cursor:pointer}
-.photo-pdf-password-show input{width:18px;height:18px}
+.photo-pdf-password-wrap{position:relative;width:100%;display:flex;align-items:center}.photo-pdf-password-wrap input{width:100%;padding-right:50px !important}.photo-pdf-password-toggle{position:absolute;right:7px;top:50%;transform:translateY(-50%);width:38px;height:38px;border:0;border-radius:10px;background:transparent;color:#5f6a7a;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}.photo-pdf-password-toggle:hover,.photo-pdf-password-toggle:focus-visible{background:rgba(49,77,135,.10);color:#314D87;outline:none}.photo-pdf-password-toggle svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.photo-pdf-password-toggle .photo-eye-hide{display:none}.photo-pdf-password-toggle.is-visible .photo-eye-show{display:none}.photo-pdf-password-toggle.is-visible .photo-eye-hide{display:block}.dark-mode .photo-pdf-password-toggle{color:#b9c1cf}.dark-mode .photo-pdf-password-toggle:hover,.dark-mode .photo-pdf-password-toggle:focus-visible{background:rgba(255,255,255,.08);color:#fff}
 .photo-pdf-password-error{min-height:18px;margin-top:8px;color:#c62828;font-size:.82rem;font-weight:700}
 .dark-mode .photo-pdf-password-field input{border-color:#33445a;background:#111a29;color:#f4f7fb}
 #photo-pdf-result-modal{z-index:10060}
@@ -6361,7 +6608,6 @@ function updatePhotoPdfLanguage(){
   set('photo-pdf-password-sub','PDF को सुरक्षित करने के लिए पासवर्ड सेट करें। फिर PDF खोलते समय पासवर्ड मांगा जाएगा।','Set a password to protect this PDF. The password will be required when opening it.');
   set('photo-pdf-password-label','पासवर्ड','Password');
   set('photo-pdf-password-confirm-label','पासवर्ड दोबारा दर्ज करें','Confirm Password');
-  set('photo-pdf-password-show-label','पासवर्ड दिखाएं','Show password');
   set('photo-pdf-password-submit','पासवर्ड के साथ PDF बनाएं','Create Password-Protected PDF');
   set('photo-pdf-password-skip','बिना पासवर्ड PDF बनाएं','Create PDF Without Password');
   set('photo-pdf-camera-btn','कैमरा','Camera');
@@ -6532,16 +6778,24 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')window.closePhotoPdf
     if(modal){modal.classList.remove('active');modal.setAttribute('aria-hidden','true')}
     if(clearPending)photoPdfPendingPassword=null;
   };
-  window.togglePhotoPdfPasswordVisibility=function(){
-    const show=el('photo-pdf-password-show')?.checked;
-    ['photo-pdf-password','photo-pdf-password-confirm'].forEach(id=>{const x=el(id);if(x)x.type=show?'text':'password'});
-  };
+  document.querySelectorAll('[data-photo-password-toggle]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      const input=el(btn.getAttribute('data-photo-password-toggle'));
+      if(!input)return;
+      const visible=input.type==='text';
+      input.type=visible?'password':'text';
+      btn.classList.toggle('is-visible',!visible);
+      btn.setAttribute('aria-label',visible?'Show password':'Hide password');
+      btn.setAttribute('title',visible?'Show password':'Hide password');
+    });
+  });
   function openPhotoPdfPassword(){
     const modal=el('photo-pdf-password-modal');
-    const pass=el('photo-pdf-password'),confirm=el('photo-pdf-password-confirm'),err=el('photo-pdf-password-error'),show=el('photo-pdf-password-show');
+    const pass=el('photo-pdf-password'),confirm=el('photo-pdf-password-confirm'),err=el('photo-pdf-password-error');
     if(!modal)return;
-    if(pass)pass.value=''; if(confirm)confirm.value=''; if(err)err.textContent=''; if(show)show.checked=false;
-    togglePhotoPdfPasswordVisibility();
+    if(pass)pass.value=''; if(confirm)confirm.value=''; if(err)err.textContent='';
+    document.querySelectorAll('[data-photo-password-toggle]').forEach(function(btn){btn.classList.remove('is-visible');btn.setAttribute('aria-label','Show password');btn.setAttribute('title','Show password');});
+    if(pass)pass.type='password'; if(confirm)confirm.type='password';
     modal.classList.add('active');modal.setAttribute('aria-hidden','false');
     setTimeout(()=>pass?.focus(),80);
   }
@@ -7445,9 +7699,8 @@ document.addEventListener('DOMContentLoaded',()=>{
     <div class="psp-body">
       <p class="psp-description" id="pspDescription">Set a password to protect this Personal Store.</p>
 
-      <div class="psp-field"><label for="pspPassword" id="pspPasswordLabel">Password</label><input id="pspPassword" type="password" autocomplete="current-password" placeholder="Enter password"></div>
-      <div class="psp-field" id="pspConfirmWrap"><label for="pspConfirmPassword">Confirm Password</label><input id="pspConfirmPassword" type="password" autocomplete="new-password" placeholder="Re-enter password"></div>
-      <label class="psp-show"><input id="pspShowPassword" type="checkbox"><span>Show password</span></label>
+      <div class="psp-field psp-password-field"><label for="pspPassword" id="pspPasswordLabel">Password</label><div class="psp-password-wrap"><input id="pspPassword" type="password" autocomplete="current-password" placeholder="Enter password"><button type="button" class="psp-password-toggle" data-password-toggle="pspPassword" aria-label="Show password" title="Show password"><svg class="psp-eye-show" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.5"></circle></svg><svg class="psp-eye-hide" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"></path><path d="M10.6 5.2A10.8 10.8 0 0 1 12 5c6 0 9.5 7 9.5 7a18 18 0 0 1-3.1 3.8"></path><path d="M6.2 6.3C3.9 8 2.5 12 2.5 12s3.5 7 9.5 7c1.7 0 3.2-.5 4.5-1.2"></path><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"></path></svg></button></div></div>
+      <div class="psp-field psp-password-field" id="pspConfirmWrap"><label for="pspConfirmPassword">Confirm Password</label><div class="psp-password-wrap"><input id="pspConfirmPassword" type="password" autocomplete="new-password" placeholder="Re-enter password"><button type="button" class="psp-password-toggle" data-password-toggle="pspConfirmPassword" aria-label="Show password" title="Show password"><svg class="psp-eye-show" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.5"></circle></svg><svg class="psp-eye-hide" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"></path><path d="M10.6 5.2A10.8 10.8 0 0 1 12 5c6 0 9.5 7 9.5 7a18 18 0 0 1-3.1 3.8"></path><path d="M6.2 6.3C3.9 8 2.5 12 2.5 12s3.5 7 9.5 7c1.7 0 3.2-.5 4.5-1.2"></path><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"></path></svg></button></div></div>
 
       <div class="psp-security-box" id="pspSecuritySetup" style="display:none;">
         <p><strong>Private recovery question</strong><br>Choose something only you can answer. It will be required before a forgotten password can be reset.</p>
@@ -7480,9 +7733,9 @@ document.addEventListener('DOMContentLoaded',()=>{
     <div class="psp-head"><div class="psp-title-wrap"><div class="psp-lock-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3a4 4 0 0 0-4 4v3H6a2 2 0 0 0-2 2v8h16v-8a2 2 0 0 0-2-2h-2V7a4 4 0 0 0-4-4Z"></path><path d="M9 15h6M12 13v4"></path></svg></div><h2 id="pssTitle">Security & Password</h2></div><button type="button" class="psp-close" id="pssClose" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></div>
     <div class="psp-body">
       <p class="psp-description">Change your Personal Store password or update your private recovery question.</p>
-      <div class="psp-field"><label for="pssCurrent">Current Password</label><input id="pssCurrent" type="password" autocomplete="current-password"></div>
-      <div class="psp-field"><label for="pssNew">New Password</label><input id="pssNew" type="password" autocomplete="new-password"></div>
-      <div class="psp-field"><label for="pssNewConfirm">Confirm New Password</label><input id="pssNewConfirm" type="password" autocomplete="new-password"></div>
+      <div class="psp-field psp-password-field"><label for="pssCurrent">Current Password</label><div class="psp-password-wrap"><input id="pssCurrent" type="password" autocomplete="current-password"><button type="button" class="psp-password-toggle" data-password-toggle="pssCurrent" aria-label="Show password" title="Show password"><svg class="psp-eye-show" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.5"></circle></svg><svg class="psp-eye-hide" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"></path><path d="M10.6 5.2A10.8 10.8 0 0 1 12 5c6 0 9.5 7 9.5 7a18 18 0 0 1-3.1 3.8"></path><path d="M6.2 6.3C3.9 8 2.5 12 2.5 12s3.5 7 9.5 7c1.7 0 3.2-.5 4.5-1.2"></path><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"></path></svg></button></div></div>
+      <div class="psp-field psp-password-field"><label for="pssNew">New Password</label><div class="psp-password-wrap"><input id="pssNew" type="password" autocomplete="new-password"><button type="button" class="psp-password-toggle" data-password-toggle="pssNew" aria-label="Show password" title="Show password"><svg class="psp-eye-show" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.5"></circle></svg><svg class="psp-eye-hide" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"></path><path d="M10.6 5.2A10.8 10.8 0 0 1 12 5c6 0 9.5 7 9.5 7a18 18 0 0 1-3.1 3.8"></path><path d="M6.2 6.3C3.9 8 2.5 12 2.5 12s3.5 7 9.5 7c1.7 0 3.2-.5 4.5-1.2"></path><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"></path></svg></button></div></div>
+      <div class="psp-field psp-password-field"><label for="pssNewConfirm">Confirm New Password</label><div class="psp-password-wrap"><input id="pssNewConfirm" type="password" autocomplete="new-password"><button type="button" class="psp-password-toggle" data-password-toggle="pssNewConfirm" aria-label="Show password" title="Show password"><svg class="psp-eye-show" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.5"></circle></svg><svg class="psp-eye-hide" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"></path><path d="M10.6 5.2A10.8 10.8 0 0 1 12 5c6 0 9.5 7 9.5 7a18 18 0 0 1-3.1 3.8"></path><path d="M6.2 6.3C3.9 8 2.5 12 2.5 12s3.5 7 9.5 7c1.7 0 3.2-.5 4.5-1.2"></path><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"></path></svg></button></div></div>
       <div class="psp-security-box">
         <p><strong>Recovery question</strong><br>This is used only for forgotten-password verification.</p>
         <div class="psp-field"><label for="pssQuestion">Personal Question</label><input id="pssQuestion" type="text" autocomplete="off"></div>
@@ -7494,14 +7747,43 @@ document.addEventListener('DOMContentLoaded',()=>{
   </div>
 </div>
 
+
+<style id="psp-password-toggle-css">
+.psp-password-wrap{position:relative;width:100%;display:flex;align-items:center}.psp-password-wrap input{width:100%;padding-right:50px !important;box-sizing:border-box}.psp-password-toggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:38px;height:38px;border:0;border-radius:10px;background:transparent;color:#5b6575;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}.psp-password-toggle:hover,.psp-password-toggle:focus-visible{background:rgba(49,77,135,.10);color:#314d87;outline:none}.psp-password-toggle svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.psp-password-toggle .psp-eye-hide{display:none}.psp-password-toggle.is-visible .psp-eye-show{display:none}.psp-password-toggle.is-visible .psp-eye-hide{display:block}.dark-mode .psp-password-toggle{color:#b9c1cf}.dark-mode .psp-password-toggle:hover,.dark-mode .psp-password-toggle:focus-visible{background:rgba(255,255,255,.08);color:#fff}
+</style>
 <script id="personal-store-password-js">
 (function(){
-  const KEY='taraju_personal_store_password_hash_v2';
-  const QKEY='taraju_personal_store_recovery_question_v1';
-  const AKEY='taraju_personal_store_recovery_answer_hash_v1';
+
+  document.querySelectorAll('[data-password-toggle]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var input=document.getElementById(btn.getAttribute('data-password-toggle'));
+      if(!input) return;
+      var visible=input.type==='text';
+      input.type=visible?'password':'text';
+      btn.classList.toggle('is-visible',!visible);
+      btn.setAttribute('aria-label',visible?'Show password':'Hide password');
+      btn.setAttribute('title',visible?'Show password':'Hide password');
+    });
+  });
+  const BASE_KEY='taraju_personal_store_password_hash_v2';
+  const BASE_QKEY='taraju_personal_store_recovery_question_v1';
+  const BASE_AKEY='taraju_personal_store_recovery_answer_hash_v1';
+  const KEY=()=>window.TarajuAccountScope?.key?.(BASE_KEY)||BASE_KEY+'__guest';
+  const QKEY=()=>window.TarajuAccountScope?.key?.(BASE_QKEY)||BASE_QKEY+'__guest';
+  const AKEY=()=>window.TarajuAccountScope?.key?.(BASE_AKEY)||BASE_AKEY+'__guest';
+  function ensureScopedCredentials(){
+    try{
+      if(!window.TarajuAccountScope?.authenticated?.()) return;
+      const ownerKey='taraju_personal_store_credentials_legacy_owner_v1';
+      if(localStorage.getItem(ownerKey)) return;
+      const pairs=[[BASE_KEY,KEY()],[BASE_QKEY,QKEY()],[BASE_AKEY,AKEY()]];
+      pairs.forEach(([oldKey,newKey])=>{const v=localStorage.getItem(oldKey);if(v!=null&&!localStorage.getItem(newKey))localStorage.setItem(newKey,v)});
+      localStorage.setItem(ownerKey,window.TarajuAccountScope.scope());
+    }catch(e){}
+  }
   const modal=document.getElementById('personalStorePasswordModal');
   const pass=document.getElementById('pspPassword'), confirm=document.getElementById('pspConfirmPassword');
-  const confirmWrap=document.getElementById('pspConfirmWrap'), show=document.getElementById('pspShowPassword');
+  const confirmWrap=document.getElementById('pspConfirmWrap');
   const save=document.getElementById('pspSaveButton'), close=document.getElementById('pspClose');
   const desc=document.getElementById('pspDescription'), error=document.getElementById('pspError');
   const forgotBtn=document.getElementById('pspForgotButton'), changeBtn=document.getElementById('pspChangeButton'), backBtn=document.getElementById('pspBackButton');
@@ -7557,14 +7839,15 @@ document.addEventListener('DOMContentLoaded',()=>{
 
   function resetModal(){
     mode='open'; recoveryVerified=false;
-    pass.value='';confirm.value='';show.checked=false;pass.type='password';confirm.type='password';
+    pass.value='';confirm.value='';pass.type='password';confirm.type='password';
     error.textContent=''; setupBox.style.display='none'; forgotBox.style.display='none';
     changeBtn.style.display='none'; backBtn.style.display='none'; forgotBtn.style.display='block';
     confirmWrap.style.display='none'; save.textContent=text('Personal Store खोलें','Open Personal Store');
     desc.textContent=text('Personal Store खोलने के लिए पासवर्ड डालें।','Enter your Personal Store password to open it.');
   }
   function open(){
-    resetModal(); hasPassword=!!localStorage.getItem(KEY);
+    ensureScopedCredentials();
+    resetModal(); hasPassword=!!localStorage.getItem(KEY());
     if(!hasPassword){
       mode='setup'; setupBox.style.display='block'; confirmWrap.style.display='block'; forgotBtn.style.display='none';
       desc.textContent=text('Personal Store सुरक्षित करने के लिए पासवर्ड और एक निजी recovery question सेट करें।','Set a password and a private recovery question to protect this Personal Store.');
@@ -7578,13 +7861,13 @@ document.addEventListener('DOMContentLoaded',()=>{
   window.openPersonalStoreSecurity=function(){
     const m=document.getElementById('personalStoreSecurityModal'); if(!m)return;
     document.getElementById('pssCurrent').value='';document.getElementById('pssNew').value='';document.getElementById('pssNewConfirm').value='';
-    document.getElementById('pssQuestion').value=localStorage.getItem(QKEY)||'';document.getElementById('pssAnswer').value='';document.getElementById('pssError').textContent='';
+    document.getElementById('pssQuestion').value=localStorage.getItem(QKEY())||'';document.getElementById('pssAnswer').value='';document.getElementById('pssError').textContent='';
     m.style.display='flex';m.setAttribute('aria-hidden','false');setTimeout(()=>document.getElementById('pssCurrent')?.focus(),100);
   };
   close.addEventListener('click',hide);modal.addEventListener('click',e=>{if(e.target===modal)hide();});
-  show.addEventListener('change',()=>{const t=show.checked?'text':'password';pass.type=t;confirm.type=t;});
+  // Password visibility is handled by the eye buttons via data-password-toggle.
   forgotBtn.addEventListener('click',()=>{
-    const q=localStorage.getItem(QKEY);
+    const q=localStorage.getItem(QKEY());
     if(!q){error.textContent=text('Recovery question सेट नहीं है। पहले Personal Store खोलकर Security & Password में इसे सेट करें।','No recovery question is set. Open the Personal Store first and set it in Security & Password.');return;}
     mode='forgot'; recoveryVerified=false; setupBox.style.display='none';confirmWrap.style.display='none';forgotBox.style.display='block';
     forgotBtn.style.display='none';backBtn.style.display='block';changeBtn.style.display='none';pass.value='';
@@ -7592,10 +7875,11 @@ document.addEventListener('DOMContentLoaded',()=>{
     desc.textContent=text('पहले अपनी निजी जानकारी verify करें। सही होने पर ही नया पासवर्ड बनाया जा सकेगा।','Verify your private information first. Only then can you create a new password.');
     save.textContent=text('जानकारी Verify करें','Verify Personal Information');setTimeout(()=>fa.focus(),80);
   });
-  backBtn.addEventListener('click',()=>{resetModal();hasPassword=!!localStorage.getItem(KEY);modal.classList.add('active');});
+  backBtn.addEventListener('click',()=>{resetModal();hasPassword=!!localStorage.getItem(KEY());modal.classList.add('active');});
   changeBtn.addEventListener('click',()=>{hide();window.openPersonalStoreSecurity();});
 
   async function submit(){
+    ensureScopedCredentials();
     error.textContent=''; save.disabled=true;
     try{
       if(mode==='setup'){
@@ -7603,20 +7887,20 @@ document.addEventListener('DOMContentLoaded',()=>{
         if(!p||p.length<4){error.textContent=text('पासवर्ड कम से कम 4 अक्षरों का होना चाहिए।','Password must be at least 4 characters.');return;}
         if(p!==c){error.textContent=text('पासवर्ड मेल नहीं खाते।','Passwords do not match.');return;}
         if(q.length<5||a.length<2){error.textContent=text('Personal Question और उसका Answer भरें।','Enter the Personal Question and its Answer.');return;}
-        localStorage.setItem(KEY,await hashValue(p));localStorage.setItem(QKEY,q);localStorage.setItem(AKEY,await hashValue(a));enterStore(p);return;
+        localStorage.setItem(KEY(),await hashValue(p));localStorage.setItem(QKEY(),q);localStorage.setItem(AKEY(),await hashValue(a));enterStore(p);return;
       }
       if(mode==='forgot'){
         if(!recoveryVerified){
-          const stored=localStorage.getItem(AKEY); if(!stored){error.textContent=text('Recovery information उपलब्ध नहीं है।','Recovery information is unavailable.');return;}
+          const stored=localStorage.getItem(AKEY()); if(!stored){error.textContent=text('Recovery information उपलब्ध नहीं है।','Recovery information is unavailable.');return;}
           if(await hashValue(fa.value)!==stored){error.textContent=text('Personal information verify नहीं हुई।','Personal information could not be verified.');fa.value='';fa.focus();return;}
           recoveryVerified=true;document.getElementById('pspRecoveryNewWrap').style.display='block';document.getElementById('pspRecoveryConfirmWrap').style.display='block';
           desc.textContent=text('Verification सफल है। अब नया पासवर्ड सेट करें।','Verification successful. Now set a new password.');save.textContent=text('नया पासवर्ड सेव करें','Save New Password');rn.focus();return;
         }
         const np=rn.value,nc=rc.value;if(np.length<4){error.textContent=text('नया पासवर्ड कम से कम 4 अक्षरों का होना चाहिए।','New password must be at least 4 characters.');return;}if(np!==nc){error.textContent=text('नए पासवर्ड मेल नहीं खाते।','New passwords do not match.');return;}
-        localStorage.setItem(KEY,await hashValue(np));enterStore(np);return;
+        localStorage.setItem(KEY(),await hashValue(np));enterStore(np);return;
       }
       const p=pass.value; if(!p){error.textContent=text('पासवर्ड डालें।','Please enter your password.');return;}
-      if(await hashValue(p)===localStorage.getItem(KEY)){
+      if(await hashValue(p)===localStorage.getItem(KEY())){
         changeBtn.style.display='block';enterStore(p);
       }else{error.textContent=text('पासवर्ड गलत है।','Incorrect password.');pass.value='';pass.focus();}
     }catch(e){console.error('Personal Store password error',e);error.textContent=text('पासवर्ड process नहीं हो सका। कृपया दोबारा प्रयास करें।','Password could not be processed. Please try again.');}
@@ -7632,10 +7916,10 @@ document.addEventListener('DOMContentLoaded',()=>{
     try{
       const cur=document.getElementById('pssCurrent').value,n=document.getElementById('pssNew').value,nc=document.getElementById('pssNewConfirm').value;
       const q=normalize(document.getElementById('pssQuestion').value).trim(),a=normalize(document.getElementById('pssAnswer').value).trim();
-      if(await hashValue(cur)!==localStorage.getItem(KEY)){er.textContent=text('Current password गलत है।','Current password is incorrect.');return;}
+      if(await hashValue(cur)!==localStorage.getItem(KEY())){er.textContent=text('Current password गलत है।','Current password is incorrect.');return;}
       if(n.length<4||n!==nc){er.textContent=text('नया password सही और दोनों जगह समान भरें।','Enter a valid new password and make both fields match.');return;}
       if(q.length<5||a.length<2){er.textContent=text('Personal Question और Answer जरूरी हैं।','Personal Question and Answer are required.');return;}
-      localStorage.setItem(KEY,await hashValue(n));localStorage.setItem(QKEY,q);localStorage.setItem(AKEY,await hashValue(a));window.TarajuPersonalStoreSessionPassword=n;
+      localStorage.setItem(KEY(),await hashValue(n));localStorage.setItem(QKEY(),q);localStorage.setItem(AKEY(),await hashValue(a));window.TarajuPersonalStoreSessionPassword=n;
       er.textContent=text('Security settings सेव हो गईं।','Security settings saved.');setTimeout(()=>{pssModal.style.display='none';pssModal.setAttribute('aria-hidden','true');},500);
     }catch(e){er.textContent=text('Security settings सेव नहीं हो सकीं।','Security settings could not be saved.');}finally{pssSave.disabled=false;}
   });
@@ -7748,6 +8032,7 @@ body{align-items:stretch;background:linear-gradient(135deg,var(--bg-light),var(-
                 if(!profile) return;
                 user={name:profile.name||'',email:profile.email||'',picture:profile.picture||'',sub:profile.sub||''};
                 localStorage.setItem('taraju_google_user',JSON.stringify(user));
+                window.TarajuAccountScope?.notify?.();
                 refreshUI();
                 closeTarajuGoogleLogin();
             },
@@ -7796,6 +8081,7 @@ body{align-items:stretch;background:linear-gradient(135deg,var(--bg-light),var(-
         }catch(e){}
         user=null;
         localStorage.removeItem('taraju_google_user');
+        window.TarajuAccountScope?.notify?.();
         refreshUI();
     };
 
@@ -7929,5 +8215,164 @@ body.taraju-profile-locked .slide-profile-avatar{display:none!important}
 })();
 </script>
 
+
+<style id="taraju-ui-polish-v2">
+/* Security & Password — cleaner mobile card */
+#personalStoreSecurityModal{padding:12px!important;background:rgba(8,13,24,.62)!important;backdrop-filter:blur(10px)!important;-webkit-backdrop-filter:blur(10px)!important;}
+#personalStoreSecurityModal .psp-card{width:min(94vw,520px)!important;max-height:90vh!important;border-radius:26px!important;padding:0!important;overflow:hidden!important;background:var(--bg-card)!important;box-shadow:0 24px 70px rgba(0,0,0,.34)!important;border:1px solid rgba(49,77,135,.12)!important;}
+#personalStoreSecurityModal .psp-head{padding:18px 18px 15px!important;margin:0!important;border-bottom:1px solid rgba(100,110,125,.14)!important;background:linear-gradient(180deg,rgba(49,77,135,.08),transparent)!important;}
+#personalStoreSecurityModal .psp-title-wrap{gap:11px!important;}
+#personalStoreSecurityModal .psp-lock-icon{width:42px!important;height:42px!important;border-radius:13px!important;}
+#personalStoreSecurityModal .psp-head h2{font-size:1.08rem!important;letter-spacing:-.01em!important;}
+#personalStoreSecurityModal .psp-close{width:40px!important;height:40px!important;border-radius:50%!important;}
+#personalStoreSecurityModal .psp-body{padding:18px!important;}
+#personalStoreSecurityModal .psp-description{margin:0 0 16px!important;font-size:.84rem!important;line-height:1.5!important;color:var(--text-secondary)!important;}
+#personalStoreSecurityModal .psp-field{margin-top:12px!important;}
+#personalStoreSecurityModal .psp-field label{display:block!important;margin:0 0 7px!important;font-size:.76rem!important;font-weight:800!important;}
+#personalStoreSecurityModal .psp-field input{width:100%!important;box-sizing:border-box!important;min-height:48px!important;border:1.5px solid rgba(100,110,125,.30)!important;border-radius:13px!important;background:var(--bg-card)!important;color:var(--text-primary)!important;padding:12px 13px!important;font:inherit!important;outline:none!important;}
+#personalStoreSecurityModal .psp-field input:focus{border-color:var(--royal-blue)!important;box-shadow:0 0 0 3px rgba(49,77,135,.10)!important;}
+#personalStoreSecurityModal .psp-security-box{margin-top:17px!important;padding:14px!important;border-radius:16px!important;background:rgba(49,77,135,.055)!important;border:1px solid rgba(49,77,135,.12)!important;}
+#personalStoreSecurityModal .psp-security-box p{font-size:.76rem!important;line-height:1.45!important;margin:0 0 11px!important;}
+#personalStoreSecurityModal .psp-save{width:100%!important;margin-top:16px!important;min-height:48px!important;border-radius:13px!important;font-size:.82rem!important;}
+#personalStoreSecurityModal .psp-error{margin-top:9px!important;font-size:.76rem!important;}
+
+/* Personal Private Folder — real in-app page with top back bar */
+#privateFolderModal.pf-page-mode{display:block!important;inset:0!important;padding:0!important;background:var(--bg-card)!important;z-index:15000!important;overflow:auto!important;}
+#privateFolderModal.pf-page-mode .pf-card{width:100%!important;max-width:none!important;min-height:100vh!important;max-height:none!important;overflow:visible!important;border-radius:0!important;padding:0!important;box-shadow:none!important;background:var(--bg-card)!important;}
+#privateFolderModal.pf-page-mode .pf-page-header{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid rgba(100,110,125,.15);background:var(--bg-card);box-shadow:0 3px 16px rgba(0,0,0,.06);}
+#privateFolderModal.pf-page-mode .pf-page-back{width:42px;height:42px;min-width:42px;border:0;border-radius:13px;background:var(--bg-blue);color:var(--text-primary);display:flex;align-items:center;justify-content:center;cursor:pointer;}
+#privateFolderModal.pf-page-mode .pf-page-back svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+#privateFolderModal.pf-page-mode .pf-page-heading{min-width:0;flex:1;}
+#privateFolderModal.pf-page-mode .pf-page-heading strong{display:block;font-size:1rem;font-weight:850;}
+#privateFolderModal.pf-page-mode .pf-page-heading span{display:block;margin-top:2px;color:var(--text-secondary);font-size:.68rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#privateFolderModal.pf-page-mode .pf-close{display:none!important;}
+#privateFolderModal.pf-page-mode .pf-page-content{padding:16px 14px 30px;}
+#privateFolderModal.pf-page-mode .pf-security-note{margin-bottom:4px;}
+@media(max-width:520px){#personalStoreSecurityModal .psp-body{padding:15px!important}#personalStoreSecurityModal .psp-head{padding:15px!important}#privateFolderModal.pf-page-mode .pf-page-content{padding:14px 12px 26px;}}
+</style>
+<script id="taraju-ui-polish-v2-js">
+(function(){
+  function setupPrivatePage(){
+    const modal=document.getElementById('privateFolderModal');
+    const card=modal?.querySelector('.pf-card');
+    if(!modal||!card||card.dataset.pageReady)return;
+    card.dataset.pageReady='1';
+    const head=card.querySelector('.pf-head');
+    const content=document.createElement('div'); content.className='pf-page-content';
+    Array.from(card.children).forEach(function(child){ if(child!==head) content.appendChild(child); });
+    const pageHead=document.createElement('div'); pageHead.className='pf-page-header';
+    pageHead.innerHTML='<button type="button" class="pf-page-back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></svg></button><div class="pf-page-heading"><strong>Personal Private Folder</strong><span>Private contacts, notes and personal text</span></div>';
+    card.innerHTML='';
+    card.appendChild(pageHead);
+    card.appendChild(content);
+    const back=pageHead.querySelector('.pf-page-back');
+    back.addEventListener('click',function(){
+      modal.classList.remove('pf-page-mode');
+      modal.setAttribute('aria-hidden','true');
+      document.body.style.overflow='';
+      if(typeof window.__tarajuPfClose==='function')window.__tarajuPfClose();
+    });
+    window.__tarajuPfBack=()=>back.click();
+    window.__tarajuPfClose=function(){
+      modal.classList.remove('pf-page-mode'); modal.setAttribute('aria-hidden','true'); document.body.style.overflow='';
+    };
+  }
+  function enablePrivatePage(){
+    const modal=document.getElementById('privateFolderModal'); if(!modal)return;
+    setupPrivatePage();
+    modal.classList.add('pf-page-mode'); modal.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden';
+  }
+  document.addEventListener('DOMContentLoaded',function(){
+    const btn=document.getElementById('private-folder-open');
+    if(btn){
+      btn.addEventListener('click',function(){
+        setTimeout(enablePrivatePage,20);
+      },true);
+    }
+  });
+})();
+</script>
+
+<!-- PERSIST ACTIVE APP ACROSS RESPONSIVE/DESKTOP-MOBILE MODE SWITCHES -->
+<script id="taraju-responsive-navigation-persistence">
+(function(){
+  const KEY='taraju_active_screen_v2';
+  const STACK_KEY='taraju_nav_stack_v2';
+  const VALID_PREFIX='screen-';
+
+  function saveNavigationState(){
+    try{
+      const id=(typeof currentScreenId!=='undefined' && currentScreenId) ? currentScreenId : 'screen-home';
+      if(id && id.indexOf(VALID_PREFIX)===0 && document.getElementById(id)){
+        sessionStorage.setItem(KEY,id);
+      }
+      if(typeof navStack!=='undefined' && Array.isArray(navStack)){
+        sessionStorage.setItem(STACK_KEY,JSON.stringify(navStack.slice(-30)));
+      }
+    }catch(e){}
+  }
+
+  function restoreNavigationState(){
+    try{
+      const saved=sessionStorage.getItem(KEY);
+      if(!saved || saved==='screen-home') return;
+      const target=document.getElementById(saved);
+      if(!target) return;
+
+      if(typeof navStack!=='undefined' && Array.isArray(navStack)){
+        const raw=sessionStorage.getItem(STACK_KEY);
+        if(raw){
+          const parsed=JSON.parse(raw);
+          if(Array.isArray(parsed)){
+            navStack.length=0;
+            parsed.forEach(id=>{
+              if(typeof id==='string' && id.indexOf(VALID_PREFIX)===0 && document.getElementById(id)) navStack.push(id);
+            });
+          }
+        }
+      }
+
+      // Restore only after the full page has been built. This prevents a
+      // desktop/mobile responsive reload from throwing the user back Home.
+      if(typeof switchScreen==='function' && typeof currentScreenId!=='undefined'){
+        switchScreen(saved);
+      }else{
+        document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+        target.classList.add('active');
+        if(typeof currentScreenId!=='undefined') currentScreenId=saved;
+      }
+    }catch(e){ console.warn('Navigation state restore failed',e); }
+  }
+
+  function install(){
+    // Wrap the final navigation function after all application add-ons have loaded.
+    if(typeof window.switchScreen==='function' && !window.switchScreen.__tarajuResponsivePersist){
+      const original=window.switchScreen;
+      function persistedSwitch(screenId){
+        const result=original.apply(this,arguments);
+        saveNavigationState();
+        return result;
+      }
+      persistedSwitch.__tarajuResponsivePersist=true;
+      window.switchScreen=persistedSwitch;
+    }
+    // Do not overwrite a saved app with the freshly initialized Home screen.
+    // Restore first; then persist the restored state.
+    restoreNavigationState();
+    saveNavigationState();
+  }
+
+  // Save immediately before a browser/WebView reload caused by changing
+  // desktop/mobile mode, and also on ordinary page lifecycle events.
+  window.addEventListener('pagehide',saveNavigationState,{capture:true});
+  window.addEventListener('beforeunload',saveNavigationState,{capture:true});
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',()=>setTimeout(install,0),{once:true});
+  }else{
+    setTimeout(install,0);
+  }
+})();
+</script>
 </body>
 </html>
