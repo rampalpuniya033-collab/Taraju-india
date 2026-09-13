@@ -351,6 +351,27 @@
     
 
 
+<style id="personal-store-action-menu-css">
+  .personal-store-item-wrap{position:relative;overflow:visible !important;}
+  .personal-store-more-btn{width:40px;height:40px;min-width:40px;flex:0 0 40px;border:0;border-radius:12px;background:var(--bg-blue);color:#314D87;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;box-sizing:border-box;transition:transform .15s ease,background .15s ease;}
+  .personal-store-more-btn:active{transform:scale(.94);}
+  .personal-store-more-btn svg{width:20px;height:20px;fill:currentColor;}
+  /* Mobile-friendly action sheet: centered and fixed so it never gets clipped by a file row. */
+  .personal-store-menu{position:fixed;left:50%;bottom:82px;transform:translateX(-50%) translateY(10px);z-index:12000;width:min(300px,calc(100vw - 32px));padding:8px;border:1px solid rgba(49,77,135,.14);border-radius:18px;background:var(--bg-card);box-shadow:0 18px 45px rgba(0,0,0,.22);display:none;opacity:0;transition:opacity .16s ease,transform .16s ease;}
+  .personal-store-menu.active{display:block;opacity:1;transform:translateX(-50%) translateY(0);}
+  .personal-store-menu::before{content:"";position:fixed;left:50%;top:50%;width:100vw;height:100vh;transform:translate(-50%,-50%);z-index:-1;background:rgba(0,0,0,.12);pointer-events:none;}
+  .personal-store-menu button{width:100%;display:flex;align-items:center;gap:12px;border:0;background:transparent;color:var(--text-primary);padding:14px 15px;border-radius:12px;font:700 .95rem 'Segoe UI','Roboto',sans-serif;text-align:left;cursor:pointer;min-height:48px;}
+  .personal-store-menu button:hover,.personal-store-menu button:active{background:var(--bg-blue);}
+  .personal-store-menu button.store-menu-danger{color:#C62828;}
+  .personal-store-menu button.store-menu-danger:hover,.personal-store-menu button.store-menu-danger:active{background:#FCE4EC;}
+  .personal-store-menu svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:0 0 20px;}
+  .dark-mode .personal-store-menu{border-color:#3a3f50;box-shadow:0 18px 45px rgba(0,0,0,.55);}
+  .dark-mode .personal-store-menu::before{background:rgba(0,0,0,.28);}
+  .personal-store-rename-input{width:100%;box-sizing:border-box;padding:13px 14px;border:2px solid #E0E0E0;border-radius:12px;background:var(--bg-card);color:var(--text-primary);font-size:1rem;outline:none;}
+  .personal-store-rename-input:focus{border-color:var(--golden-yellow);box-shadow:0 0 0 3px rgba(227,184,0,.16);}
+  .dark-mode .personal-store-rename-input{border-color:#444;}
+</style>
+
 <!-- TARAJU PROFESSIONAL BILL TEMPLATE -->
 <style>
 @media screen {
@@ -5570,6 +5591,18 @@ hr{display:none!important;border:0!important;height:0!important;margin:0!importa
   </div>
 </div>
 
+<div class="modal-overlay" id="personalStoreRenameModal" style="z-index:10002;">
+  <div class="modal-content" style="max-width:430px;width:calc(100% - 28px);padding:24px;">
+    <h3 style="margin:0 0 8px;font-size:1.15rem;">Rename file</h3>
+    <p style="margin:0 0 14px;color:var(--text-secondary);line-height:1.45;">Enter the new file name.</p>
+    <input id="personal-store-rename-input" class="personal-store-rename-input" type="text" maxlength="180" autocomplete="off" spellcheck="false" aria-label="New file name">
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:18px;">
+      <button type="button" id="personal-store-rename-cancel" class="btn-close-modal" style="background:#888;color:#fff;min-width:120px;">Cancel</button>
+      <button type="button" id="personal-store-rename-confirm" class="btn-close-modal" style="background:var(--golden-yellow);color:#1A1A1A;min-width:120px;">Save</button>
+    </div>
+  </div>
+</div>
+
 <style id="personal-store-upload-loading-css">
 #personal-store-upload-loading{display:none;position:fixed;inset:0;z-index:10050;background:rgba(0,0,0,.42);align-items:center;justify-content:center;padding:20px;box-sizing:border-box;}
 #personal-store-upload-loading.active{display:flex;}
@@ -5672,10 +5705,11 @@ hr{display:none!important;border:0!important;height:0!important;margin:0!importa
 
   async function getFile(id){const d=await db();return new Promise((res,rej)=>{const r=d.transaction(STORE,'readonly').objectStore(STORE).get(id);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
   async function deleteFile(id){const d=await db();return new Promise((res,rej)=>{const r=d.transaction(STORE,'readwrite').objectStore(STORE).delete(id);r.onsuccess=()=>res();r.onerror=()=>rej(r.error);});}
+  async function renameFile(id,name){const d=await db();return new Promise((res,rej)=>{const tx=d.transaction(STORE,'readwrite'),store=tx.objectStore(STORE),req=store.get(Number(id));req.onsuccess=()=>{const f=req.result;if(!f){rej(new Error('File not found'));return;}f.name=name;const put=store.put(f);put.onsuccess=()=>res(f);put.onerror=()=>rej(put.error)};req.onerror=()=>rej(req.error);tx.onerror=()=>rej(tx.error);});}
   function esc(x){return String(x).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
   function fmt(n){if(n<1024)return n+' B';if(n<1048576)return (n/1024).toFixed(1)+' KB';if(n<1073741824)return (n/1048576).toFixed(1)+' MB';return (n/1073741824).toFixed(1)+' GB';}
   function ico(t){let p=t.startsWith('image/')?'<path d="M4 5h16v14H4z"/><circle cx="9" cy="10" r="1.5"/><path d="m5 17 4-4 3 3 2-2 5 3"/>':t.startsWith('video/')?'<rect x="3" y="5" width="13" height="14" rx="2"/><path d="m16 10 5-3v10l-5-3z"/>':'<path d="M7 3h7l4 4v14H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5"/>';return '<svg viewBox="0 0 24 24" style="width:24px;height:24px;fill:none;stroke:#314D87;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;">'+p+'</svg>';}
-  async function render(){const list=document.getElementById('personal-store-list'),empty=document.getElementById('personal-store-empty');if(!list||!empty)return;try{const fs=(await allFiles()).sort((a,b)=>b.createdAt-a.createdAt);list.innerHTML='';empty.style.display=fs.length?'none':'block';fs.forEach(f=>{const r=document.createElement('div');r.className='customer-section';r.style.cssText='margin:0;padding:12px;display:flex;align-items:center;gap:10px;width:100%;max-width:100%;min-width:0;box-sizing:border-box;overflow:hidden;';r.innerHTML='<div style="width:48px;height:48px;border-radius:14px;background:var(--bg-blue);display:flex;align-items:center;justify-content:center;flex:0 0 48px;">'+ico(f.type)+'</div><div style="min-width:0;max-width:100%;flex:1 1 auto;overflow:hidden;"><div style="font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(f.name)+'</div><div style="font-size:.72rem;color:var(--text-secondary);margin-top:3px;">'+esc(f.type||'File')+' · '+fmt(f.size)+'</div></div><button type="button" data-store-action="view" data-id="'+f.id+'" aria-label="View" style="width:40px;height:40px;min-width:40px;flex:0 0 40px;border:0;border-radius:12px;background:var(--bg-blue);color:#314D87;box-sizing:border-box;padding:0;"><svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg></button><button type="button" data-store-action="download" data-id="'+f.id+'" aria-label="Download" style="width:40px;height:40px;min-width:40px;flex:0 0 40px;border:0;border-radius:12px;background:var(--bg-blue);color:#314D87;box-sizing:border-box;padding:0;"><svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg></button><button type="button" data-store-action="delete" data-id="'+f.id+'" aria-label="Delete" style="width:40px;height:40px;min-width:40px;flex:0 0 40px;border:0;border-radius:12px;background:#FCE4EC;color:#C62828;box-sizing:border-box;padding:0;"><svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/></svg></button>';list.appendChild(r);});}catch(e){empty.textContent='Unable to load saved files on this device.';empty.style.display='block';}}
+  async function render(){const list=document.getElementById('personal-store-list'),empty=document.getElementById('personal-store-empty');if(!list||!empty)return;try{const fs=(await allFiles()).sort((a,b)=>b.createdAt-a.createdAt);list.innerHTML='';empty.style.display=fs.length?'none':'block';fs.forEach(f=>{const r=document.createElement('div');r.className='customer-section personal-store-item-wrap';r.style.cssText='margin:0;padding:12px;display:flex;align-items:center;gap:10px;width:100%;max-width:100%;min-width:0;box-sizing:border-box;overflow:visible;position:relative;';r.innerHTML='<div style="width:48px;height:48px;border-radius:14px;background:var(--bg-blue);display:flex;align-items:center;justify-content:center;flex:0 0 48px;">'+ico(f.type)+'</div><div style="min-width:0;max-width:100%;flex:1 1 auto;overflow:hidden;"><div style="font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(f.name)+'</div><div style="font-size:.72rem;color:var(--text-secondary);margin-top:3px;">'+esc(f.type||'File')+' · '+fmt(f.size)+'</div></div><button type="button" data-store-action="view" data-id="'+f.id+'" aria-label="View" style="width:40px;height:40px;min-width:40px;flex:0 0 40px;border:0;border-radius:12px;background:var(--bg-blue);color:#314D87;box-sizing:border-box;padding:0;"><svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg></button><button type="button" class="personal-store-more-btn" data-store-menu-toggle="1" data-id="'+f.id+'" aria-label="More options" aria-expanded="false"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg></button><div class="personal-store-menu" data-store-menu="1" data-id="'+f.id+'"><button type="button" data-store-action="download" data-id="'+f.id+'"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span>Download</span></button><button type="button" data-store-action="rename" data-id="'+f.id+'"><svg viewBox="0 0 24 24"><path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5.5 16.5 4 20Z"/><path d="m14.5 7.5 2 2"/></svg><span>Rename</span></button><button type="button" class="store-menu-danger" data-store-action="delete" data-id="'+f.id+'"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/></svg><span>Delete</span></button></div>';list.appendChild(r);});}catch(e){empty.textContent='Unable to load saved files on this device.';empty.style.display='block';}}
   function closePersonalStoreViewer(){
      const viewer=document.getElementById('personalStoreViewer');
      const body=document.getElementById('personal-store-viewer-body');
@@ -5843,15 +5877,26 @@ hr{display:none!important;border:0!important;height:0!important;margin:0!importa
     const m=document.getElementById('personalStoreDeleteModal');
     if(m)m.classList.add('active');
   }
+  let pendingStoreRenameId=null;
+  function closePersonalStoreRenameModal(){pendingStoreRenameId=null;const m=document.getElementById('personalStoreRenameModal');if(m)m.classList.remove('active');}
+  function requestPersonalStoreRename(id,name){pendingStoreRenameId=Number(id);const input=document.getElementById('personal-store-rename-input');if(input){input.value=name||'';setTimeout(()=>{input.focus();input.select()},60)}const m=document.getElementById('personalStoreRenameModal');if(m)m.classList.add('active');}
+  async function confirmPersonalStoreRename(){const id=pendingStoreRenameId;const input=document.getElementById('personal-store-rename-input');const next=(input?.value||'').trim();if(id==null||!next)return;try{await renameFile(id,next);closePersonalStoreRenameModal();await render();}catch(e){alert('Could not rename this file.');}}
+  function closeAllPersonalStoreMenus(except){document.querySelectorAll('.personal-store-menu.active').forEach(m=>{if(m!==except)m.classList.remove('active')});document.querySelectorAll('[data-store-menu-toggle][aria-expanded="true"]').forEach(b=>{const menu=b.parentElement?.querySelector('[data-store-menu]');if(menu!==except)b.setAttribute('aria-expanded','false')});}
   document.addEventListener('click',async e=>{
+    const toggle=e.target.closest?.('[data-store-menu-toggle]');
+    if(toggle){const wrap=toggle.parentElement,menu=wrap?.querySelector('[data-store-menu]');if(menu){const next=!menu.classList.contains('active');closeAllPersonalStoreMenus(next?menu:null);menu.classList.toggle('active',next);toggle.setAttribute('aria-expanded',String(next));}return;}
     const b=e.target.closest?.('[data-store-action]');
     if(!b)return;
+    closeAllPersonalStoreMenus();
     const f=await getFile(Number(b.dataset.id));
     if(!f)return;
     if(b.dataset.storeAction==='view')openBlob(f.blob,f.name,false);
     else if(b.dataset.storeAction==='download')openBlob(f.blob,f.name,true);
     else if(b.dataset.storeAction==='delete')requestPersonalStoreDelete(f.id,f.name);
+    else if(b.dataset.storeAction==='rename')requestPersonalStoreRename(f.id,f.name);
   });
+  document.addEventListener('click',e=>{if(!e.target.closest?.('.personal-store-item-wrap'))closeAllPersonalStoreMenus();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAllPersonalStoreMenus();});
   document.addEventListener('DOMContentLoaded',()=>{
     const cancel=document.getElementById('personal-store-delete-cancel');
     const confirmBtn=document.getElementById('personal-store-delete-confirm');
@@ -5859,6 +5904,14 @@ hr{display:none!important;border:0!important;height:0!important;margin:0!importa
     if(cancel)cancel.addEventListener('click',closePersonalStoreDeleteModal);
     if(confirmBtn)confirmBtn.addEventListener('click',confirmPersonalStoreDelete);
     if(modal)modal.addEventListener('click',e=>{if(e.target===modal)closePersonalStoreDeleteModal();});
+    const renameCancel=document.getElementById('personal-store-rename-cancel');
+    const renameConfirm=document.getElementById('personal-store-rename-confirm');
+    const renameModal=document.getElementById('personalStoreRenameModal');
+    const renameInput=document.getElementById('personal-store-rename-input');
+    if(renameCancel)renameCancel.addEventListener('click',closePersonalStoreRenameModal);
+    if(renameConfirm)renameConfirm.addEventListener('click',confirmPersonalStoreRename);
+    if(renameInput)renameInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();confirmPersonalStoreRename();}else if(e.key==='Escape'){closePersonalStoreRenameModal();}});
+    if(renameModal)renameModal.addEventListener('click',e=>{if(e.target===renameModal)closePersonalStoreRenameModal();});
   });
   window.TarajuPersonalStoreRefresh=render;
   window.photoPdfRender=render; document.addEventListener('DOMContentLoaded',()=>{render();updatePhotoPdfLanguage();});
