@@ -2365,8 +2365,17 @@ hr{display:none!important;border:0!important;height:0!important;margin:0!importa
       <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
         <div><div class="customer-title" style="margin-bottom:4px;"><svg class="customer-profile-icon" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5M9 12h6M9 16h6"/></svg><span id="personal-store-section-title">Personal Store</span></div><div id="personal-store-note" style="font-size:.78rem;color:var(--text-secondary);">Your files are stored locally on this device.</div></div>
         <label for="personal-store-file-input" class="nav-pill-btn" style="cursor:pointer;display:inline-flex;align-items:center;gap:7px;"><svg viewBox="0 0 24 24" style="width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg><span id="personal-store-add-label">Add Files</span></label>
+        <button type="button" class="nav-pill-btn" onclick="openPersonalStoreSecurity()" style="display:inline-flex;align-items:center;gap:7px;"><svg viewBox="0 0 24 24" style="width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><rect x="5" y="10" width="14" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg><span>Security &amp; Password</span></button>
         <input id="personal-store-file-input" type="file" multiple accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.rtf,.ppt,.pptx,.zip" style="display:none;">
       </div>
+    </div>
+    <div class="private-folder-card" id="private-folder-card">
+      <div class="private-folder-head">
+        <div class="private-folder-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h4l2 2H18.5A2.5 2.5 0 0 1 21 9.5v8A2.5 2.5 0 0 1 18.5 20h-13A2.5 2.5 0 0 1 3 17.5z"/><path d="M8 12h8M8 16h5"/></svg></div>
+        <div class="private-folder-copy"><strong id="private-folder-title">Personal Private Folder</strong><span id="private-folder-subtitle">Contacts, private notes and personal text — encrypted on this device.</span></div>
+        <button type="button" class="private-folder-open" id="private-folder-open"><svg viewBox="0 0 24 24"><path d="M12 3a7 7 0 0 1 7 7v3"/><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V8a4 4 0 0 1 8 0v2M12 14v2"/></svg><span id="private-folder-open-label">Open</span></button>
+      </div>
+      <div class="private-folder-stats" id="private-folder-stats">0 contacts · 0 notes</div>
     </div>
     <div id="personal-store-list" style="display:grid;gap:10px;margin-top:14px;"></div>
     <div id="personal-store-empty" class="customer-section" style="text-align:center;color:var(--text-secondary);padding:32px 18px;">No files saved yet.</div>
@@ -5918,6 +5927,43 @@ hr{display:none!important;border:0!important;height:0!important;margin:0!importa
 })();
 </script>
 
+<style id="taraju-private-folder-css">
+.private-folder-card{margin-top:14px;background:linear-gradient(135deg,var(--bg-card),var(--bg-blue));border:1.5px solid rgba(49,77,135,.18);border-radius:20px;padding:14px;box-shadow:var(--shadow-card);}
+.private-folder-head{display:flex;align-items:center;gap:11px;min-width:0}.private-folder-icon{width:46px;height:46px;border-radius:14px;background:rgba(49,77,135,.12);color:#314D87;display:flex;align-items:center;justify-content:center;flex:0 0 46px}.private-folder-icon svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.private-folder-copy{min-width:0;flex:1}.private-folder-copy strong{display:block;font-size:.98rem;font-weight:800}.private-folder-copy span{display:block;color:var(--text-secondary);font-size:.72rem;line-height:1.35;margin-top:3px}.private-folder-open{border:0;border-radius:12px;background:var(--golden-yellow);color:#171717;font-weight:800;padding:10px 13px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;flex:0 0 auto}.private-folder-open svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}.private-folder-stats{margin-top:10px;color:var(--text-secondary);font-size:.72rem;font-weight:700}.dark-mode .private-folder-card{border-color:rgba(255,255,255,.12)}
+.pf-modal{position:fixed;inset:0;z-index:15000;background:rgba(0,0,0,.62);display:none;align-items:center;justify-content:center;padding:16px}.pf-modal.active{display:flex}.pf-card{width:min(720px,100%);max-height:88vh;overflow:auto;background:var(--bg-card);color:var(--text-primary);border-radius:24px;box-shadow:0 25px 70px rgba(0,0,0,.35);padding:18px}.pf-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}.pf-head h3{margin:0;font-size:1.25rem}.pf-close{width:38px;height:38px;border:0;border-radius:50%;background:var(--bg-blue);color:var(--text-primary);cursor:pointer;font-size:20px}.pf-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}.pf-tab{border:1px solid #d8dce5;background:var(--bg-card);color:var(--text-primary);border-radius:12px;padding:11px 6px;font-weight:800;cursor:pointer}.pf-tab.active{background:var(--royal-blue);color:#fff;border-color:var(--royal-blue)}.pf-pane{display:none}.pf-pane.active{display:block}.pf-form{display:grid;gap:9px}.pf-form input,.pf-form textarea{width:100%;box-sizing:border-box;border:2px solid #e0e0e0;border-radius:12px;padding:12px 13px;background:var(--bg-card);color:var(--text-primary);font:inherit;outline:none}.pf-form textarea{min-height:110px;resize:vertical}.pf-form input:focus,.pf-form textarea:focus{border-color:var(--golden-yellow)}.pf-primary{border:0;border-radius:12px;background:var(--golden-yellow);color:#161616;padding:12px;font-weight:800;cursor:pointer}.pf-list{display:grid;gap:8px;margin-top:12px}.pf-item{padding:12px;border:1px solid rgba(100,110,125,.2);border-radius:13px;background:var(--bg-card)}.pf-item-top{display:flex;justify-content:space-between;gap:8px}.pf-item strong{font-size:.9rem}.pf-item small{color:var(--text-secondary)}.pf-item p{margin:6px 0 0;white-space:pre-wrap;word-break:break-word;color:var(--text-secondary);font-size:.82rem;line-height:1.45}.pf-delete{border:0;background:#e53935;color:#fff;border-radius:9px;padding:6px 9px;font-weight:700;cursor:pointer}.pf-empty{text-align:center;color:var(--text-secondary);padding:18px 8px;font-size:.82rem}.pf-security-note{margin-top:12px;padding:10px 12px;border-radius:12px;background:rgba(46,125,50,.08);color:var(--text-secondary);font-size:.72rem;line-height:1.45}.dark-mode .pf-form input,.dark-mode .pf-form textarea{border-color:#444}.dark-mode .pf-tab{border-color:#444}
+@media(max-width:520px){.private-folder-copy span{font-size:.68rem}.private-folder-open{padding:9px 10px}.pf-card{padding:14px;border-radius:20px}}
+</style>
+<div class="pf-modal" id="privateFolderModal" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="pf-card">
+    <div class="pf-head"><div><h3 id="pf-title">Personal Private Folder</h3><div style="font-size:.72rem;color:var(--text-secondary);margin-top:3px;">Private data is encrypted before it is saved.</div></div><button class="pf-close" id="pf-close" type="button" aria-label="Close">×</button></div>
+    <div class="pf-tabs"><button class="pf-tab active" data-pf-tab="contacts" type="button">Contacts</button><button class="pf-tab" data-pf-tab="notes" type="button">Notes</button><button class="pf-tab" data-pf-tab="texts" type="button">Personal Text</button></div>
+    <section class="pf-pane active" data-pf-pane="contacts"><form class="pf-form" id="pf-contact-form"><input id="pf-contact-name" required placeholder="Name"><input id="pf-contact-phone" required inputmode="tel" placeholder="Contact number"><input id="pf-contact-extra" placeholder="Email / extra detail"><button class="pf-primary" type="submit">Save Contact</button></form><div class="pf-list" id="pf-contact-list"></div></section>
+    <section class="pf-pane" data-pf-pane="notes"><form class="pf-form" id="pf-note-form"><input id="pf-note-title" required placeholder="Note title"><textarea id="pf-note-body" required placeholder="Write your private note..."></textarea><button class="pf-primary" type="submit">Save Note</button></form><div class="pf-list" id="pf-note-list"></div></section>
+    <section class="pf-pane" data-pf-pane="texts"><form class="pf-form" id="pf-text-form"><input id="pf-text-title" required placeholder="Title"><textarea id="pf-text-body" required placeholder="Write personal text..."></textarea><button class="pf-primary" type="submit">Save Text</button></form><div class="pf-list" id="pf-text-list"></div></section>
+    <div class="pf-security-note">Security: this private-folder content uses AES-GCM encryption with a key derived from your Personal Store password. It is stored locally in this browser/device. If you forget the Personal Store password, encrypted private-folder data cannot be recovered by the app.</div>
+  </div>
+</div>
+<script id="taraju-private-folder-js">
+(function(){
+  const DB='taraju_private_folder_v1', STORE='vault'; let dbp=null, data={contacts:[],notes:[],texts:[]}, key=null, vaultSalt=null;
+  const $=id=>document.getElementById(id);
+  function db(){if(dbp)return dbp;dbp=new Promise((res,rej)=>{const r=indexedDB.open(DB,1);r.onupgradeneeded=()=>{const d=r.result;if(!d.objectStoreNames.contains(STORE))d.createObjectStore(STORE,{keyPath:'id'});};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});return dbp}
+  function ab(a){return btoa(String.fromCharCode(...new Uint8Array(a)))} function ba(s){return Uint8Array.from(atob(s),c=>c.charCodeAt(0))}
+  async function derive(password,salt){const base=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:150000,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
+  async function saveVault(){if(!key)return;const salt=vaultSalt || crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));vaultSalt=salt;const k=key;const cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv},k,new TextEncoder().encode(JSON.stringify(data)));const d=await db();await new Promise((res,rej)=>{const r=d.transaction(STORE,'readwrite').objectStore(STORE).put({id:'main',salt:ab(salt),iv:ab(iv),cipher:ab(cipher)});r.onsuccess=()=>res();r.onerror=()=>rej(r.error)});}
+  async function loadVault(password){const d=await db(), rec=await new Promise((res,rej)=>{const r=d.transaction(STORE,'readonly').objectStore(STORE).get('main');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});if(!rec){data={contacts:[],notes:[],texts:[]};vaultSalt=crypto.getRandomValues(new Uint8Array(16));key=await derive(password,vaultSalt);await saveVault();return true}try{vaultSalt=ba(rec.salt);key=await derive(password,vaultSalt);const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:ba(rec.iv)},key,ba(rec.cipher));data=JSON.parse(new TextDecoder().decode(plain));return true}catch(e){key=null;return false}}
+  function esc(x){return String(x??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+  function render(){const map=[['contacts','pf-contact-list'],['notes','pf-note-list'],['texts','pf-text-list']];map.forEach(([type,id])=>{const el=$(id);if(!el)return;const arr=data[type]||[];el.innerHTML=arr.length?arr.map((x,i)=>`<div class="pf-item"><div class="pf-item-top"><strong>${esc(x.title||x.name||'Untitled')}</strong><button class="pf-delete" type="button" data-pf-delete="${type}" data-pf-index="${i}">Delete</button></div>${type==='contacts'?`<small>${esc(x.phone)}${x.extra?' · '+esc(x.extra):''}</small>`:`<p>${esc(x.body)}</p>`}</div>`).join(''):'<div class="pf-empty">Nothing saved yet.</div>'});const st=$('private-folder-stats');if(st)st.textContent=`${data.contacts.length} contacts · ${data.notes.length} notes · ${data.texts.length} texts`}
+  function open(){const modal=$('privateFolderModal');if(!modal)return;const pass=window.TarajuPersonalStoreSessionPassword;if(!pass){alert('Please unlock Personal Store first.');return}loadVault(pass).then(ok=>{if(!ok){alert('Private Folder could not be unlocked with the current Personal Store password.');return}render();modal.classList.add('active');modal.setAttribute('aria-hidden','false')})}
+  function close(){const m=$('privateFolderModal');if(m)m.classList.remove('active');key=null;vaultSalt=null}
+  $('private-folder-open')?.addEventListener('click',open);$('pf-close')?.addEventListener('click',close);$('privateFolderModal')?.addEventListener('click',e=>{if(e.target.id==='privateFolderModal')close()});
+  document.addEventListener('click',e=>{const tab=e.target.closest?.('[data-pf-tab]');if(tab){document.querySelectorAll('[data-pf-tab]').forEach(x=>x.classList.remove('active'));document.querySelectorAll('[data-pf-pane]').forEach(x=>x.classList.remove('active'));tab.classList.add('active');document.querySelector(`[data-pf-pane="${tab.dataset.pfTab}"]`)?.classList.add('active');return}const del=e.target.closest?.('[data-pf-delete]');if(del){const t=del.dataset.pfDelete,i=Number(del.dataset.pfIndex);data[t].splice(i,1);saveVault().then(render)}});
+  $('pf-contact-form')?.addEventListener('submit',e=>{e.preventDefault();data.contacts.unshift({name:$('pf-contact-name').value.trim(),phone:$('pf-contact-phone').value.trim(),extra:$('pf-contact-extra').value.trim()});e.target.reset();saveVault().then(render)});
+  $('pf-note-form')?.addEventListener('submit',e=>{e.preventDefault();data.notes.unshift({title:$('pf-note-title').value.trim(),body:$('pf-note-body').value.trim()});e.target.reset();saveVault().then(render)});
+  $('pf-text-form')?.addEventListener('submit',e=>{e.preventDefault();data.texts.unshift({title:$('pf-text-title').value.trim(),body:$('pf-text-body').value.trim()});e.target.reset();saveVault().then(render)});
+})();
+</script>
+
 <script id="taraju-personal-store-resilience">
 (function(){
   const QUEUE='taraju_personal_store_upload_queue_v1';
@@ -7376,28 +7422,228 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 
 <!-- Personal Store Password: shown only when opening Personal Store -->
+<style id="personal-store-security-ui">
+.psp-links{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap}
+.psp-link-btn{border:0;background:transparent;color:#31558f;font-weight:800;padding:5px 0;cursor:pointer;font-size:.92rem}
+.psp-link-btn.danger{color:#b3261e}
+.psp-security-box{margin-top:14px;padding:14px;border:1px solid rgba(49,77,135,.16);border-radius:16px;background:rgba(49,77,135,.045)}
+.psp-security-box p{margin:0 0 10px;color:var(--text-secondary);font-size:.84rem;line-height:1.45}
+.psp-security-box .psp-field{margin-top:12px}
+.psp-back{margin-top:12px}
+</style>
+
+<!-- Personal Store Password / Recovery -->
 <div id="personalStorePasswordModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="pspTitle">
   <div class="psp-card">
-    <div class="psp-head"><div class="psp-title-wrap"><div class="psp-lock-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path><path d="M12 14v2"></path></svg></div><h2 id="pspTitle">Personal Store Password</h2></div><button type="button" class="psp-close" id="pspClose" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></div>
-    <div class="psp-body"><p class="psp-description" id="pspDescription">Set a password to protect this Personal Store. The password will be required when opening it.</p>
-      <div class="psp-field"><label for="pspPassword">Password</label><input id="pspPassword" type="password" autocomplete="new-password" placeholder="Enter password"></div>
+    <div class="psp-head">
+      <div class="psp-title-wrap">
+        <div class="psp-lock-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path><path d="M12 14v2"></path></svg></div>
+        <h2 id="pspTitle">Personal Store Password</h2>
+      </div>
+      <button type="button" class="psp-close" id="pspClose" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
+    </div>
+    <div class="psp-body">
+      <p class="psp-description" id="pspDescription">Set a password to protect this Personal Store.</p>
+
+      <div class="psp-field"><label for="pspPassword" id="pspPasswordLabel">Password</label><input id="pspPassword" type="password" autocomplete="current-password" placeholder="Enter password"></div>
       <div class="psp-field" id="pspConfirmWrap"><label for="pspConfirmPassword">Confirm Password</label><input id="pspConfirmPassword" type="password" autocomplete="new-password" placeholder="Re-enter password"></div>
-      <label class="psp-show"><input id="pspShowPassword" type="checkbox"><span>Show password</span></label><div id="pspError" class="psp-error" role="alert" aria-live="polite"></div><button type="button" class="psp-save" id="pspSaveButton">Save Password</button>
+      <label class="psp-show"><input id="pspShowPassword" type="checkbox"><span>Show password</span></label>
+
+      <div class="psp-security-box" id="pspSecuritySetup" style="display:none;">
+        <p><strong>Private recovery question</strong><br>Choose something only you can answer. It will be required before a forgotten password can be reset.</p>
+        <div class="psp-field"><label for="pspSecurityQuestion">Personal Question</label><input id="pspSecurityQuestion" type="text" autocomplete="off" placeholder="e.g. What was my childhood nickname?"></div>
+        <div class="psp-field"><label for="pspSecurityAnswer">Your Answer</label><input id="pspSecurityAnswer" type="password" autocomplete="off" placeholder="Enter your private answer"></div>
+      </div>
+
+      <div class="psp-security-box" id="pspForgotBox" style="display:none;">
+        <p><strong>Verify your personal information</strong><br>Answer the private question you created earlier. Only after verification will you be allowed to set a new password.</p>
+        <div class="psp-field"><label for="pspForgotQuestion">Personal Question</label><input id="pspForgotQuestion" type="text" readonly></div>
+        <div class="psp-field"><label for="pspForgotAnswer">Your Answer</label><input id="pspForgotAnswer" type="password" autocomplete="off" placeholder="Enter your answer"></div>
+        <div class="psp-field" id="pspRecoveryNewWrap" style="display:none;"><label for="pspRecoveryNew">New Password</label><input id="pspRecoveryNew" type="password" autocomplete="new-password" placeholder="Enter new password"></div>
+        <div class="psp-field" id="pspRecoveryConfirmWrap" style="display:none;"><label for="pspRecoveryConfirm">Confirm New Password</label><input id="pspRecoveryConfirm" type="password" autocomplete="new-password" placeholder="Re-enter new password"></div>
+      </div>
+
+      <div id="pspError" class="psp-error" role="alert" aria-live="polite"></div>
+      <button type="button" class="psp-save" id="pspSaveButton">Open Personal Store</button>
+      <div class="psp-links">
+        <button type="button" class="psp-link-btn" id="pspForgotButton">Forgot password?</button>
+        <button type="button" class="psp-link-btn" id="pspChangeButton" style="display:none;">Change password</button>
+        <button type="button" class="psp-link-btn" id="pspBackButton" style="display:none;">Back</button>
+      </div>
     </div>
   </div>
 </div>
+
+<!-- Password / security controls inside Personal Store -->
+<div id="personalStoreSecurityModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="pssTitle" style="position:fixed;inset:0;z-index:10081;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(12,18,28,.56);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);box-sizing:border-box;">
+  <div class="psp-card" style="width:min(100%,680px);max-height:calc(100vh - 36px);overflow:auto;">
+    <div class="psp-head"><div class="psp-title-wrap"><div class="psp-lock-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3a4 4 0 0 0-4 4v3H6a2 2 0 0 0-2 2v8h16v-8a2 2 0 0 0-2-2h-2V7a4 4 0 0 0-4-4Z"></path><path d="M9 15h6M12 13v4"></path></svg></div><h2 id="pssTitle">Security & Password</h2></div><button type="button" class="psp-close" id="pssClose" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></div>
+    <div class="psp-body">
+      <p class="psp-description">Change your Personal Store password or update your private recovery question.</p>
+      <div class="psp-field"><label for="pssCurrent">Current Password</label><input id="pssCurrent" type="password" autocomplete="current-password"></div>
+      <div class="psp-field"><label for="pssNew">New Password</label><input id="pssNew" type="password" autocomplete="new-password"></div>
+      <div class="psp-field"><label for="pssNewConfirm">Confirm New Password</label><input id="pssNewConfirm" type="password" autocomplete="new-password"></div>
+      <div class="psp-security-box">
+        <p><strong>Recovery question</strong><br>This is used only for forgotten-password verification.</p>
+        <div class="psp-field"><label for="pssQuestion">Personal Question</label><input id="pssQuestion" type="text" autocomplete="off"></div>
+        <div class="psp-field"><label for="pssAnswer">Answer</label><input id="pssAnswer" type="password" autocomplete="off"></div>
+      </div>
+      <div id="pssError" class="psp-error" role="alert" aria-live="polite"></div>
+      <button type="button" class="psp-save" id="pssSave">Save Security Settings</button>
+    </div>
+  </div>
+</div>
+
 <script id="personal-store-password-js">
 (function(){
- const KEY='taraju_personal_store_password_hash_v2';const modal=document.getElementById('personalStorePasswordModal'),pass=document.getElementById('pspPassword'),confirm=document.getElementById('pspConfirmPassword'),confirmWrap=document.getElementById('pspConfirmWrap'),show=document.getElementById('pspShowPassword'),save=document.getElementById('pspSaveButton'),close=document.getElementById('pspClose'),desc=document.getElementById('pspDescription'),error=document.getElementById('pspError');if(!modal||!pass||!confirm||!save)return;let hasPassword=false;
- function hashValue(v){if(window.crypto&&crypto.subtle&&window.TextEncoder)return crypto.subtle.digest('SHA-256',new TextEncoder().encode(v)).then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join(''));return Promise.resolve('fallback_'+btoa(unescape(encodeURIComponent(v))))}
- function open(){hasPassword=!!localStorage.getItem(KEY);pass.value='';confirm.value='';show.checked=false;pass.type='password';confirm.type='password';error.textContent='';if(hasPassword){desc.textContent='Enter your Personal Store password to open it.';pass.placeholder='Enter password';pass.autocomplete='current-password';confirmWrap.style.display='none';save.textContent='Open Personal Store'}else{desc.textContent='Set a password to protect this Personal Store. The password will be required when opening it.';pass.placeholder='Enter password';pass.autocomplete='new-password';confirmWrap.style.display='block';save.textContent='Save Password'}modal.classList.add('active');modal.setAttribute('aria-hidden','false');setTimeout(()=>pass.focus(),120)}
- function hide(){modal.classList.remove('active');modal.setAttribute('aria-hidden','true');error.textContent=''}function enterStore(){hide();if(typeof navigateTo==='function')navigateTo('screen-personal-store')}window.openPersonalStorePassword=open;close.addEventListener('click',hide);modal.addEventListener('click',e=>{if(e.target===modal)hide()});show.addEventListener('change',()=>{const t=show.checked?'text':'password';pass.type=t;confirm.type=t});
- async function submit(){const p=pass.value,c=confirm.value;error.textContent='';if(!p){error.textContent='Please enter a password.';pass.focus();return}if(p.length<4){error.textContent='Password must be at least 4 characters.';return}save.disabled=true;try{if(!hasPassword){if(p!==c){error.textContent='Passwords do not match.';return}save.textContent='Saving...';localStorage.setItem(KEY,await hashValue(p));enterStore()}else{save.textContent='Checking...';if(await hashValue(p)===localStorage.getItem(KEY)){enterStore()}else{error.textContent='Incorrect password.';pass.value='';pass.focus()}}}catch(e){error.textContent='Password could not be processed.'}finally{save.disabled=false;if(modal.classList.contains('active'))save.textContent=hasPassword?'Open Personal Store':'Save Password'}}
- save.addEventListener('click',submit);[pass,confirm].forEach(el=>el.addEventListener('keydown',e=>{if(e.key==='Enter')submit()}));
+  const KEY='taraju_personal_store_password_hash_v2';
+  const QKEY='taraju_personal_store_recovery_question_v1';
+  const AKEY='taraju_personal_store_recovery_answer_hash_v1';
+  const modal=document.getElementById('personalStorePasswordModal');
+  const pass=document.getElementById('pspPassword'), confirm=document.getElementById('pspConfirmPassword');
+  const confirmWrap=document.getElementById('pspConfirmWrap'), show=document.getElementById('pspShowPassword');
+  const save=document.getElementById('pspSaveButton'), close=document.getElementById('pspClose');
+  const desc=document.getElementById('pspDescription'), error=document.getElementById('pspError');
+  const forgotBtn=document.getElementById('pspForgotButton'), changeBtn=document.getElementById('pspChangeButton'), backBtn=document.getElementById('pspBackButton');
+  const setupBox=document.getElementById('pspSecuritySetup'), forgotBox=document.getElementById('pspForgotBox');
+  const qInput=document.getElementById('pspSecurityQuestion'), aInput=document.getElementById('pspSecurityAnswer');
+  const fq=document.getElementById('pspForgotQuestion'), fa=document.getElementById('pspForgotAnswer');
+  const rn=document.getElementById('pspRecoveryNew'), rc=document.getElementById('pspRecoveryConfirm');
+  if(!modal||!pass||!confirm||!save)return;
+
+  let hasPassword=false, mode='open', recoveryVerified=false;
+  const text=(hi,en)=> (typeof currentLanguage!=='undefined'&&currentLanguage==='en')?en:hi;
+
+  // Synchronous SHA-256 fallback. This avoids the "Password could not be processed" error
+  // when the HTML is opened from a local/mobile context where crypto.subtle is unavailable.
+  function sha256(ascii){
+    function rightRotate(value,amount){return (value>>>amount)|(value<<(32-amount));}
+    var mathPow=Math.pow,maxWord=mathPow(2,32),lengthProperty='length',i,j,result='',words=[],asciiBitLength=ascii[lengthProperty]*8;
+    var hash=sha256.h=sha256.h||[],k=sha256.k=sha256.k||[],primeCounter=k[lengthProperty];
+    function isPrime(n){for(var factor=2;factor*factor<=n;factor++)if(n%factor===0)return false;return true;}
+    function frac(n){return (n-Math.floor(n))*maxWord;}
+    if(!primeCounter){for(var candidate=2;primeCounter<64;candidate++)if(isPrime(candidate)){if(primeCounter<8)hash[primeCounter]=frac(Math.pow(candidate,1/2));k[primeCounter++]=frac(Math.pow(candidate,1/3));}}
+    ascii += '\x80'; while(ascii[lengthProperty]%64-56) ascii+='\x00';
+    for(i=0;i<ascii[lengthProperty];i++){j=ascii.charCodeAt(i);if(j>255)throw new Error('Unsupported character');words[i>>2]|=j<<((3-i)%4*8);}
+    words[words[lengthProperty]]=asciiBitLength/maxWord; words[words[lengthProperty]]=asciiBitLength;
+    for(j=0;j<words[lengthProperty];){
+      var w=words.slice(j,j+=16), oldHash=hash.slice(0);
+      for(i=0;i<64;i++){
+        var w15=w[i-15],w2=w[i-2],a=hash[0],e=hash[4];
+        var temp1=(hash[7]+(rightRotate(e,6)^rightRotate(e,11)^rightRotate(e,25))+((e&hash[5])^((~e)&hash[6]))+k[i]+(w[i]=(i<16?w[i]:((w[i-16]+(rightRotate(w15,7)^rightRotate(w15,18)^(w15>>>3))+w[i-7]+(rightRotate(w2,17)^rightRotate(w2,19)^(w2>>>10)))|0)))|0);
+        var temp2=((rightRotate(a,2)^rightRotate(a,13)^rightRotate(a,22))+((a&hash[1])^(a&hash[2])^(hash[1]&hash[2])))|0;
+        hash=[(temp1+temp2)|0,hash[0],hash[1],hash[2],(hash[3]+temp1)|0,hash[4],hash[5],hash[6]];
+      }
+      for(i=0;i<8;i++)hash[i]=(hash[i]+oldHash[i])|0;
+    }
+    for(i=0;i<8;i++)for(j=3;j+1;j--){var b=(hash[i]>>(j*8))&255;result+=('0'+b.toString(16)).slice(-2);}
+    return result;
+  }
+  function normalize(v){return String(v??'').normalize('NFKC');}
+  async function hashValue(v){
+    v=normalize(v);
+    try{
+      if(window.crypto&&window.crypto.subtle&&window.TextEncoder){
+        const b=await window.crypto.subtle.digest('SHA-256',new TextEncoder().encode(v));
+        return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');
+      }
+    }catch(e){}
+    // TextEncoder may be missing in some older WebViews; convert UTF-8 manually.
+    try{
+      const bytes=unescape(encodeURIComponent(v));
+      return sha256(bytes);
+    }catch(e){return sha256(v);}
+  }
+
+  function resetModal(){
+    mode='open'; recoveryVerified=false;
+    pass.value='';confirm.value='';show.checked=false;pass.type='password';confirm.type='password';
+    error.textContent=''; setupBox.style.display='none'; forgotBox.style.display='none';
+    changeBtn.style.display='none'; backBtn.style.display='none'; forgotBtn.style.display='block';
+    confirmWrap.style.display='none'; save.textContent=text('Personal Store खोलें','Open Personal Store');
+    desc.textContent=text('Personal Store खोलने के लिए पासवर्ड डालें।','Enter your Personal Store password to open it.');
+  }
+  function open(){
+    resetModal(); hasPassword=!!localStorage.getItem(KEY);
+    if(!hasPassword){
+      mode='setup'; setupBox.style.display='block'; confirmWrap.style.display='block'; forgotBtn.style.display='none';
+      desc.textContent=text('Personal Store सुरक्षित करने के लिए पासवर्ड और एक निजी recovery question सेट करें।','Set a password and a private recovery question to protect this Personal Store.');
+      save.textContent=text('पासवर्ड सेव करें','Save Password');
+    }
+    modal.classList.add('active');modal.setAttribute('aria-hidden','false');setTimeout(()=>pass.focus(),120);
+  }
+  function hide(){modal.classList.remove('active');modal.setAttribute('aria-hidden','true');error.textContent='';}
+  function enterStore(p){window.TarajuPersonalStoreSessionPassword=p;hide();if(typeof navigateTo==='function')navigateTo('screen-personal-store');}
+  window.openPersonalStorePassword=open;
+  window.openPersonalStoreSecurity=function(){
+    const m=document.getElementById('personalStoreSecurityModal'); if(!m)return;
+    document.getElementById('pssCurrent').value='';document.getElementById('pssNew').value='';document.getElementById('pssNewConfirm').value='';
+    document.getElementById('pssQuestion').value=localStorage.getItem(QKEY)||'';document.getElementById('pssAnswer').value='';document.getElementById('pssError').textContent='';
+    m.style.display='flex';m.setAttribute('aria-hidden','false');setTimeout(()=>document.getElementById('pssCurrent')?.focus(),100);
+  };
+  close.addEventListener('click',hide);modal.addEventListener('click',e=>{if(e.target===modal)hide();});
+  show.addEventListener('change',()=>{const t=show.checked?'text':'password';pass.type=t;confirm.type=t;});
+  forgotBtn.addEventListener('click',()=>{
+    const q=localStorage.getItem(QKEY);
+    if(!q){error.textContent=text('Recovery question सेट नहीं है। पहले Personal Store खोलकर Security & Password में इसे सेट करें।','No recovery question is set. Open the Personal Store first and set it in Security & Password.');return;}
+    mode='forgot'; recoveryVerified=false; setupBox.style.display='none';confirmWrap.style.display='none';forgotBox.style.display='block';
+    forgotBtn.style.display='none';backBtn.style.display='block';changeBtn.style.display='none';pass.value='';
+    fq.value=q;fa.value='';rn.value='';rc.value='';document.getElementById('pspRecoveryNewWrap').style.display='none';document.getElementById('pspRecoveryConfirmWrap').style.display='none';
+    desc.textContent=text('पहले अपनी निजी जानकारी verify करें। सही होने पर ही नया पासवर्ड बनाया जा सकेगा।','Verify your private information first. Only then can you create a new password.');
+    save.textContent=text('जानकारी Verify करें','Verify Personal Information');setTimeout(()=>fa.focus(),80);
+  });
+  backBtn.addEventListener('click',()=>{resetModal();hasPassword=!!localStorage.getItem(KEY);modal.classList.add('active');});
+  changeBtn.addEventListener('click',()=>{hide();window.openPersonalStoreSecurity();});
+
+  async function submit(){
+    error.textContent=''; save.disabled=true;
+    try{
+      if(mode==='setup'){
+        const p=pass.value,c=confirm.value,q=normalize(qInput.value).trim(),a=normalize(aInput.value).trim();
+        if(!p||p.length<4){error.textContent=text('पासवर्ड कम से कम 4 अक्षरों का होना चाहिए।','Password must be at least 4 characters.');return;}
+        if(p!==c){error.textContent=text('पासवर्ड मेल नहीं खाते।','Passwords do not match.');return;}
+        if(q.length<5||a.length<2){error.textContent=text('Personal Question और उसका Answer भरें।','Enter the Personal Question and its Answer.');return;}
+        localStorage.setItem(KEY,await hashValue(p));localStorage.setItem(QKEY,q);localStorage.setItem(AKEY,await hashValue(a));enterStore(p);return;
+      }
+      if(mode==='forgot'){
+        if(!recoveryVerified){
+          const stored=localStorage.getItem(AKEY); if(!stored){error.textContent=text('Recovery information उपलब्ध नहीं है।','Recovery information is unavailable.');return;}
+          if(await hashValue(fa.value)!==stored){error.textContent=text('Personal information verify नहीं हुई।','Personal information could not be verified.');fa.value='';fa.focus();return;}
+          recoveryVerified=true;document.getElementById('pspRecoveryNewWrap').style.display='block';document.getElementById('pspRecoveryConfirmWrap').style.display='block';
+          desc.textContent=text('Verification सफल है। अब नया पासवर्ड सेट करें।','Verification successful. Now set a new password.');save.textContent=text('नया पासवर्ड सेव करें','Save New Password');rn.focus();return;
+        }
+        const np=rn.value,nc=rc.value;if(np.length<4){error.textContent=text('नया पासवर्ड कम से कम 4 अक्षरों का होना चाहिए।','New password must be at least 4 characters.');return;}if(np!==nc){error.textContent=text('नए पासवर्ड मेल नहीं खाते।','New passwords do not match.');return;}
+        localStorage.setItem(KEY,await hashValue(np));enterStore(np);return;
+      }
+      const p=pass.value; if(!p){error.textContent=text('पासवर्ड डालें।','Please enter your password.');return;}
+      if(await hashValue(p)===localStorage.getItem(KEY)){
+        changeBtn.style.display='block';enterStore(p);
+      }else{error.textContent=text('पासवर्ड गलत है।','Incorrect password.');pass.value='';pass.focus();}
+    }catch(e){console.error('Personal Store password error',e);error.textContent=text('पासवर्ड process नहीं हो सका। कृपया दोबारा प्रयास करें।','Password could not be processed. Please try again.');}
+    finally{save.disabled=false;}
+  }
+  save.addEventListener('click',submit);[pass,confirm,fa,rn,rc,qInput,aInput].forEach(el=>el?.addEventListener('keydown',e=>{if(e.key==='Enter')submit();}));
+
+  const pssClose=document.getElementById('pssClose'),pssSave=document.getElementById('pssSave'),pssModal=document.getElementById('personalStoreSecurityModal');
+  pssClose?.addEventListener('click',()=>{pssModal.style.display='none';pssModal.setAttribute('aria-hidden','true');});
+  pssModal?.addEventListener('click',e=>{if(e.target===pssModal){pssModal.style.display='none';pssModal.setAttribute('aria-hidden','true');}});
+  pssSave?.addEventListener('click',async()=>{
+    const er=document.getElementById('pssError');er.textContent='';pssSave.disabled=true;
+    try{
+      const cur=document.getElementById('pssCurrent').value,n=document.getElementById('pssNew').value,nc=document.getElementById('pssNewConfirm').value;
+      const q=normalize(document.getElementById('pssQuestion').value).trim(),a=normalize(document.getElementById('pssAnswer').value).trim();
+      if(await hashValue(cur)!==localStorage.getItem(KEY)){er.textContent=text('Current password गलत है।','Current password is incorrect.');return;}
+      if(n.length<4||n!==nc){er.textContent=text('नया password सही और दोनों जगह समान भरें।','Enter a valid new password and make both fields match.');return;}
+      if(q.length<5||a.length<2){er.textContent=text('Personal Question और Answer जरूरी हैं।','Personal Question and Answer are required.');return;}
+      localStorage.setItem(KEY,await hashValue(n));localStorage.setItem(QKEY,q);localStorage.setItem(AKEY,await hashValue(a));window.TarajuPersonalStoreSessionPassword=n;
+      er.textContent=text('Security settings सेव हो गईं।','Security settings saved.');setTimeout(()=>{pssModal.style.display='none';pssModal.setAttribute('aria-hidden','true');},500);
+    }catch(e){er.textContent=text('Security settings सेव नहीं हो सकीं।','Security settings could not be saved.');}finally{pssSave.disabled=false;}
+  });
 })();
 </script>
 
 <!-- WEBSITE / DESKTOP MODE CONVERSION -->
+
 <style id="taraju-website-desktop-mode">
 /* Turn the former app shell into a responsive website layout. */
 body{align-items:stretch;background:linear-gradient(135deg,var(--bg-light),var(--bg-blue));}
