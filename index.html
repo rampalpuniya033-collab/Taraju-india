@@ -83,6 +83,42 @@
 .dark-mode .barcode-qr-link{color:#E0B52A}
 @keyframes barcodePowerSpin{to{transform:rotate(360deg)}}
 </style>
+
+<style id="taraju-barcode-focus-search-css">
+.barcode-camera-guide{overflow:hidden}
+.barcode-camera-guide:after{
+  content:"";
+  position:absolute;
+  left:4%;
+  right:4%;
+  top:8%;
+  height:2px;
+  background:linear-gradient(90deg,transparent,#E3B800 18%,#fff 50%,#E3B800 82%,transparent);
+  box-shadow:0 0 12px rgba(227,184,0,.75);
+  animation:tarajuBarcodeScanLine 1.8s ease-in-out infinite;
+}
+.barcode-camera-wrap.barcode-searching .barcode-camera-guide{
+  border-color:#E3B800;
+  box-shadow:0 0 0 999px rgba(0,0,0,.24),0 0 0 3px rgba(227,184,0,.22);
+}
+.barcode-camera-wrap.barcode-searching .barcode-camera-corner:before,
+.barcode-camera-wrap.barcode-searching .barcode-camera-corner:after{
+  border-color:#E3B800;
+}
+@keyframes tarajuBarcodeScanLine{
+  0%,100%{transform:translateY(0);opacity:.45}
+  50%{transform:translateY(260px);opacity:1}
+}
+.barcode-focus-status{
+  margin-top:6px;
+  font-size:.76rem;
+  font-weight:700;
+  color:var(--text-secondary);
+  text-align:center;
+}
+.barcode-focus-status.active{color:var(--royal-blue)}
+.dark-mode .barcode-focus-status.active{color:#E0B52A}
+</style>
 </head><body><div id="barcodeUnitModal" class="barcode-unit-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="barcodeUnitModalTitle"><div class="barcode-unit-card" role="document"><div class="barcode-unit-head"><h3 id="barcodeUnitModalTitle">Select Unit</h3><button type="button" id="barcodeUnitModalClose" class="barcode-unit-close" aria-label="Close unit selector"><svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><div id="barcodeUnitOptions" class="barcode-unit-options"><button type="button" class="barcode-unit-option" data-unit="PCS"><span class="barcode-unit-option-label">PCS</span><span class="barcode-unit-radio" aria-hidden="true"></span></button><button type="button" class="barcode-unit-option" data-unit="KG"><span class="barcode-unit-option-label">KG</span><span class="barcode-unit-radio" aria-hidden="true"></span></button><button type="button" class="barcode-unit-option" data-unit="GRAM"><span class="barcode-unit-option-label">GRAM</span><span class="barcode-unit-radio" aria-hidden="true"></span></button><button type="button" class="barcode-unit-option" data-unit="L"><span class="barcode-unit-option-label">L</span><span class="barcode-unit-radio" aria-hidden="true"></span></button><button type="button" class="barcode-unit-option" data-unit="ML"><span class="barcode-unit-option-label">ML</span><span class="barcode-unit-radio" aria-hidden="true"></span></button><button type="button" class="barcode-unit-option" data-unit="BOX"><span class="barcode-unit-option-label">BOX</span><span class="barcode-unit-radio" aria-hidden="true"></span></button><button type="button" class="barcode-unit-option" data-unit="PACK"><span class="barcode-unit-option-label">PACK</span><span class="barcode-unit-radio" aria-hidden="true"></span></button><button type="button" class="barcode-unit-option" data-unit="OTHER"><span class="barcode-unit-option-label">OTHER</span><span class="barcode-unit-radio" aria-hidden="true"></span></button></div></div></div><div id="tarajuGoogleLoginModal" class="modal-overlay google-login-modal" aria-hidden="true"><div class="modal-content"><div class="google-login-icon"><span style="font-size:0">Google</span><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.35 12.27c0-.78-.07-1.53-.2-2.25H12v4.26h5.23a4.47 4.47 0 0 1-1.94 2.93v2.77h3.14c1.84-1.69 2.92-4.18 2.92-7.71z"/><path fill="#34A853" d="M12 21.75c2.62 0 4.82-.87 6.43-2.36l-3.14-2.77c-.87.58-1.99.92-3.29.92-2.53 0-4.68-1.71-5.45-4.01H3.3v2.86A9.72 9.72 0 0 0 12 21.75z"/><path fill="#FBBC05" d="M6.55 13.53A5.84 5.84 0 0 1 6.25 12c0-.53.1-1.04.3-1.53V7.61H3.3A9.75 9.75 0 0 0 2.25 12c0 1.57.38 3.05 1.05 4.39l3.25-2.86z"/><path fill="#EA4335" d="M12 6.46c1.43 0 2.72.49 3.73 1.45l2.8-2.8C16.82 3.52 14.62 2.25 12 2.25a9.72 9.72 0 0 0-8.7 5.36l3.25 2.86c.77-2.3 2.92-4.01 5.45-4.01z"/></svg></div><h3 id="tarajuGoogleTitle" class="google-login-title">Google Account</h3><p id="tarajuGoogleDescription" class="google-login-description">Choose your Gmail account to sign in.</p><div id="tarajuGoogleButtonContainer"></div><div id="tarajuGoogleUser" class="google-login-user"><img id="tarajuGoogleUserPhoto" alt="Profile"><div><div id="tarajuGoogleUserName" class="google-login-user-name"></div><div id="tarajuGoogleUserEmail" class="google-login-user-email"></div></div></div><div id="tarajuGoogleError" class="google-login-error"></div><div class="google-login-actions"><button type="button" id="tarajuGoogleCloseButton" class="google-login-close" onclick="closeTarajuGoogleLogin()">Close</button><button type="button" id="tarajuGoogleLogoutButton" class="google-login-logout" onclick="tarajuGoogleLogout()">Logout</button></div></div></div><div id="slideMenuBackdrop" class="slide-menu-backdrop" onclick="closeSlideMenu()" aria-hidden="true"></div><aside id="slideMenu" class="slide-menu" aria-label="Side navigation" aria-hidden="true"><div class="slide-menu-head"><div class="slide-brand"><div class="slide-brand-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 4v15M7 7h10M5 7l-2 5h4L5 7Zm14 0-2 5h4l-2-5Z"/><path d="M8 19h8M9 16h6"/></svg></div><div class="slide-brand-text"><div class="slide-brand-name">Taraju</div><div class="slide-brand-tag">Quick Menu</div></div></div><button class="slide-menu-close" onclick="closeSlideMenu()" aria-label="Close menu"><svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><div class="slide-menu-list" aria-hidden="true"></div><div class="slide-profile-card" onclick="openProfileModal();closeSlideMenu();" role="button" aria-label="Open profile"><div class="slide-profile-info"><div class="slide-profile-name" id="slide-profile-name">—</div><div class="slide-profile-mobile" id="slide-profile-mobile">—</div><div class="slide-profile-address" id="slide-profile-address">—</div></div><div class="slide-profile-avatar"><svg id="slide-profile-icon" viewBox="0 0 24 24"><path d="M12 12a4.2 4.2 0 1 0 0-8.4A4.2 4.2 0 0 0 12 12Zm0-6.4a2.2 2.2 0 1 1 0 4.4 2.2 2.2 0 0 1-2.2-2.2A2.2 2.2 0 0 1 12 5.6ZM4.5 21a7.5 7.5 0 0 1 15 0h-2a5.5 5.5 0 0 0-11 0h-2Z"/></svg><img id="slide-profile-photo" alt="Profile photo"></div><button type="button" id="tarajuGoogleLogoButton" class="taraju-google-logo-button"
  aria-label="Sign in with Google" onclick="openTarajuGoogleLogin(event)"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.35 12.27c0-.78-.07-1.53-.2-2.25H12v4.26h5.23a4.47 4.47 0 0 1-1.94 2.93v2.77h3.14c1.84-1.69 2.92-4.18 2.92-7.71z"/><path fill="#34A853" d="M12 21.75c2.62 0 4.82-.87 6.43-2.36l-3.14-2.77c-.87.58-1.99.92-3.29.92-2.53 0-4.68-1.71-5.45-4.01H3.3v2.86A9.72 9.72 0 0 0 12 21.75z"/><path fill="#FBBC05" d="M6.55 13.53A5.84 5.84 0 0 1 6.25 12c0-.53.1-1.04.3-1.53V7.61H3.3A9.75 9.75 0 0 0 2.25 12c0 1.57.38 3.05 1.05 4.39l3.25-2.86z"/><path fill="#EA4335" d="M12 6.46c1.43 0 2.72.49 3.73 1.45l2.8-2.8C16.82 3.52 14.62 2.25 12 2.25a9.72 9.72 0 0 0-8.7 5.36l3.25 2.86c.77-2.3 2.92-4.01 5.45-4.01z"/></svg></button></div></aside><div id="app-container"><div id="announcementToast" class="announcement-toast"><span class="speaker-icon" aria-hidden="true"><svg viewBox="0 0 32 32" role="img"><path class="speaker-body" d="M4 12h6l7-6v20l-7-6H4z"/><path class="sound-wave wave-1" d="M21 11c2.2 2.2 2.2 7.8 0 10"/><path class="sound-wave wave-2" d="M24 8c3.8 3.8 3.8 12.2 0 16"/><path class="sound-wave wave-3" d="M27 5c5.2 5.2 5.2 16.8 0 22"/></svg></span><span id="announcementText">Bill is ready: <span class="amount-highlight">₹0</span></span></div><style id="taraju-photo-pdf-css">.home-more-apps{margin-top:22px;padding-top:18px;border-top:1px solid rgba(49,77,135,.12)}.home-more-head{display:flex;align-items:end;justify-content:space-between;gap:10px;margin-bottom:10px}.home-more-head h2{font-size:1.05rem;margin:0;font-weight:800}.home-more-head span{font-size:.72rem;color:var(--text-secondary)}.more-app-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.more-app-card{min-height:104px!important;padding:14px!important;border:0;text-align:left;display:flex;flex-direction:column;gap:7px;box-shadow:var(--shadow-card);border-radius:16px;cursor:pointer}.more-app-card .card-icon{width:38px;height:38px;border-radius:11px}.more-app-card .card-icon svg{width:23px;height:23px}.photo-pdf-icon{display:inline-flex;align-items:center;justify-content:center}.photo-pdf-icon svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.photo-pdf-wrap{display:flex;flex-direction:column;gap:10px;min-height:0}.photo-pdf-screen-scroll{overflow-y:auto;flex:1;min-height:0;padding-bottom:4px}.photo-pdf-drop{min-height:0}.photo-pdf-drop{border:2px dashed rgba(49,77,135,.28);background:var(--bg-card);border-radius:15px;padding:10px 12px;text-align:center;box-shadow:var(--shadow-card)}.dark-mode .photo-pdf-drop{border-color:#555}.photo-pdf-drop-icon{width:42px;height:42px;margin:0 auto 5px;border-radius:16px;background:rgba(227,184,0,.16);color:var(--golden-yellow);display:flex;align-items:center;justify-content:center}.photo-pdf-drop-icon svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.photo-pdf-drop h3{font-size:.92rem;margin:0 0 2px}.photo-pdf-drop p{font-size:.68rem;color:var(--text-secondary);margin:0 0 7px}.photo-pdf-file-input{display:none}.photo-pdf-toolbar{display:grid;grid-template-columns:1fr 1fr;gap:9px}.photo-pdf-setting{background:var(--bg-card);border-radius:14px;padding:11px 12px;box-shadow:var(--shadow-card)}.photo-pdf-setting label{display:block;font-size:.72rem;color:var(--text-secondary);font-weight:700;margin-bottom:5px}.photo-pdf-setting select,.photo-pdf-setting input{width:100%;padding:9px 10px;border-radius:10px;border:1px solid #ddd;background:var(--bg-card);color:var(--text-primary);font-size:.85rem;outline:none}.dark-mode .photo-pdf-setting select,.dark-mode .photo-pdf-setting input{border-color:#444}.photo-pdf-pages{display:flex;flex-direction:column;gap:8px}.photo-pdf-page{display:flex;align-items:center;gap:9px;padding:8px;background:var(--bg-card);border-radius:13px;box-shadow:var(--shadow-card)}.photo-pdf-page.dragging{opacity:.55}.photo-pdf-thumb{width:58px;height:72px;object-fit:cover;border-radius:8px;background:#eee;flex:0 0 58px}.photo-pdf-page-info{min-width:0;flex:1}.photo-pdf-page-info strong{display:block;font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.photo-pdf-page-info small{color:var(--text-secondary);font-size:.68rem}.photo-pdf-page-actions{display:flex;gap:4px}.photo-pdf-icon-btn{width:32px;height:32px;border:0;border-radius:9px;background:var(--bg-blue);color:var(--text-primary);display:flex;align-items:center;justify-content:center;cursor:pointer}.photo-pdf-icon-btn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.photo-pdf-empty{padding:16px;text-align:center;color:var(--text-secondary);font-size:.8rem;background:var(--bg-card);border-radius:14px;box-shadow:var(--shadow-card)}.photo-pdf-progress{display:none;flex-direction:column;gap:9px;padding:13px 14px;background:var(--bg-blue);border-radius:14px;font-size:.82rem;font-weight:700;text-align:center;box-shadow:0 4px 14px rgba(49,82,137,.10)}.photo-pdf-progress.active{display:flex}.photo-pdf-progress-top{width:100%;display:flex;align-items:center;justify-content:center;gap:10px}.photo-pdf-progress-spinner{width:20px;height:20px;border:3px solid rgba(49,82,137,.22);border-top-color:var(--blue,#315289);border-radius:50%;animation:photoPdfSpin .8s linear infinite;flex:0 0 20px}.photo-pdf-progress-percent{min-width:44px;font-size:.9rem;font-weight:900;color:var(--blue,#315289)}.photo-pdf-progress-track{width:100%;height:9px;border-radius:999px;background:rgba(49,82,137,.14);overflow:hidden}.photo-pdf-progress-bar{height:100%;width:1%;border-radius:999px;background:var(--blue,#315289);transition:width .18s ease}@keyframes photoPdfSpin{to{transform:rotate(360deg)}}.photo-pdf-create-btn.is-loading{opacity:.78;cursor:wait;pointer-events:none}@media(max-width:400px){.more-app-grid{gap:8px}.more-app-card{min-height:96px!important;padding:12px!important}.photo-pdf-toolbar{grid-template-columns:1fr}.photo-pdf-page-actions{gap:2px}}</style><div id="screen-home" class="screen active"><div class="app-header" style="position:relative;"><button class="header-menu-btn" onclick="openSlideMenu()" aria-label="Open menu" title="Menu"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><h1>Taraju</h1></div><div class="home-grid"><button class="home-card card-yellow" onclick="navigateTo('screen-weight')"><div class="card-icon"><svg viewBox="0 0 24 24"><path d="M12 3c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 14c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-7c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="card-title">Weight Calculator</div><div class="card-subtitle">Amount to Weight</div></button><button class="home-card card-white" onclick="navigateTo('screen-gold')"><div class="card-icon"><svg viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2zM8.1 13h7.45c.75 0 1.41-.41 1.75-1.03L21 4.96 19.25 4l-3.7 7H8.53L4.27 2H1v2h2l3.6 7.59-1.35 2.45C4.52 15.37 5.48 17 7 17h12v-2H7l1.1-2z"/></svg></div><div class="card-title">Gold Calculator</div><div class="card-subtitle">Gold Price</div></button><button class="home-card card-yellow" onclick="navigateTo('screen-photo-pdf')" aria-label="Photo to PDF"><div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5"/><path d="M8 15l2.5-2.5 2 2 1.5-1.5 2 2"/><circle cx="9" cy="9" r="1.2"/></svg></div><div class="card-title">Photo to PDF</div><div class="card-subtitle">High-quality PDF from photos</div></button><button class="home-card card-yellow" onclick="navigateTo('screen-question-paper-maker')" aria-label="Question Paper Maker"><div class="card-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h10l4 4v12H5z"/><path d="M15 4v5h4"/><path d="M8 13h8M8 17h8"/></svg></div><div class="card-title">Question Paper Maker</div><div class="card-subtitle">Create professional question papers</div></button><button class="home-card card-white" onclick="navigateTo('screen-upi-fixed')" aria-label="UPI Tax Code"><div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 9h6M7 13h3M15 13h2"/><path d="M15 16h2"/></svg></div><div class="card-title">UPI Tax Code</div><div class="card-subtitle">Generate fixed-amount UPI Tax Code</div></button><button class="home-card card-blue" onclick="navigateTo('screen-barcode-tools')" aria-label="Barcode Tools">
 <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5v14M7 5v14M10 5v14M14 5v14M17 5v14M20 5v14"/><path d="M2 8h2M20 8h2M2 16h2M20 16h2"/></svg></div>
@@ -113,7 +149,7 @@
 <div id="barcode-scan-panel" hidden>
 <div class="btn-row" style="margin-top:0"><button class="btn-primary" type="button" id="barcode-camera-start">Scan with Camera</button><label class="btn-secondary barcode-upload-label">Upload Barcode<input id="barcode-image-input" type="file" accept="image/*"></label></div>
 <div id="taraju-barcode-scan-status" class="barcode-inline-status" aria-live="polite"></div>
-<div id="taraju-barcode-camera-wrap" class="barcode-camera-wrap" hidden><video id="taraju-barcode-video" playsinline muted></video><div class="barcode-camera-guide" aria-hidden="true"></div><div class="barcode-camera-corner" aria-hidden="true"></div><button type="button" id="barcode-camera-stop" class="barcode-camera-stop">Stop Camera</button></div>
+<div id="taraju-barcode-camera-wrap" class="barcode-camera-wrap" hidden><video id="taraju-barcode-video" playsinline muted></video><div id="taraju-barcode-focus-status" class="barcode-focus-status">Point the camera at the barcode and keep it inside the frame.</div><div class="barcode-camera-guide" aria-hidden="true"></div><div class="barcode-camera-corner" aria-hidden="true"></div><button type="button" id="barcode-camera-stop" class="barcode-camera-stop">Stop Camera</button></div>
 <div class="barcode-note">Generated Taraju barcodes contain the item details you enter. Other barcodes are also scanned and their raw value is shown.</div>
 <div id="taraju-barcode-result" class="barcode-scan-result" hidden><div id="taraju-barcode-result-content"></div><div id="taraju-barcode-lookup" class="barcode-detail-section" hidden></div></div>
 </div>
@@ -5723,11 +5759,98 @@ function showResult(raw,format){
   result.hidden=false;
   setStatus('taraju-barcode-scan-status','Barcode scanned successfully.','success');
 }
-function stopCamera(){if(nativeTimer){clearInterval(nativeTimer);nativeTimer=null}nativeBusy=false;if(scanControls){try{scanControls.stop()}catch(e){}scanControls=null}if(scanner){try{scanner.reset()}catch(e){}scanner=null}if(scanStream){scanStream.getTracks().forEach(function(track){try{track.stop()}catch(e){}});scanStream=null}var v=q('taraju-barcode-video');if(v){try{v.pause()}catch(e){}v.srcObject=null}var wrap=q('taraju-barcode-camera-wrap');if(wrap)wrap.hidden=true}
-function nativeScanLoop(){var v=q('taraju-barcode-video');if(!nativeDetector||!v||nativeBusy)return;nativeBusy=true;nativeDetector.detect(v).then(function(items){if(items&&items.length){var raw=items[0].rawValue||items[0].displayValue||'';var fmt=items[0].format||'';if(raw){showResult(raw,fmt);stopCamera()}}}).catch(function(){}).finally(function(){nativeBusy=false})}
-async function startNative(){var v=q('taraju-barcode-video'),wrap=q('taraju-barcode-camera-wrap');if(!v||!wrap||!('BarcodeDetector' in window))return false;try{nativeDetector=new BarcodeDetector();scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false});v.srcObject=scanStream;await v.play();wrap.hidden=false;setStatus('taraju-barcode-scan-status','Camera active. Place the barcode inside the box.','');nativeTimer=setInterval(nativeScanLoop,450);return true}catch(e){stopCamera();return false}}
+function stopCamera(){tarajuFocusSearchLock=false;setBarcodeFocusSearching(false);if(nativeTimer){clearInterval(nativeTimer);nativeTimer=null}nativeBusy=false;if(scanControls){try{scanControls.stop()}catch(e){}scanControls=null}if(scanner){try{scanner.reset()}catch(e){}scanner=null}if(scanStream){scanStream.getTracks().forEach(function(track){try{track.stop()}catch(e){}});scanStream=null}var v=q('taraju-barcode-video');if(v){try{v.pause()}catch(e){}v.srcObject=null}var wrap=q('taraju-barcode-camera-wrap');if(wrap)wrap.hidden=true}
+var tarajuLastFocusedBarcode='';
+var tarajuFocusSearchLock=false;
+
+function setBarcodeFocusSearching(active){
+  var wrap=q('taraju-barcode-camera-wrap');
+  if(wrap)wrap.classList.toggle('barcode-searching',!!active);
+  var status=q('taraju-barcode-focus-status');
+  if(status){
+    status.textContent=active?'Barcode focused. Searching product details…':'Point the camera at the barcode and keep it inside the frame.';
+    status.classList.toggle('active',!!active);
+  }
+}
+
+async function enableContinuousBarcodeFocus(stream){
+  try{
+    var track=stream&&stream.getVideoTracks?stream.getVideoTracks()[0]:null;
+    if(!track||!track.getCapabilities||!track.applyConstraints)return false;
+    var caps=track.getCapabilities();
+    var advanced={};
+    if(Array.isArray(caps.focusMode)&&caps.focusMode.includes('continuous'))advanced.focusMode='continuous';
+    if(Array.isArray(caps.exposureMode)&&caps.exposureMode.includes('continuous'))advanced.exposureMode='continuous';
+    if(Array.isArray(caps.whiteBalanceMode)&&caps.whiteBalanceMode.includes('continuous'))advanced.whiteBalanceMode='continuous';
+    if(Object.keys(advanced).length)await track.applyConstraints({advanced:[advanced]});
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+
+function scheduleFocusedBarcodeStop(){
+  setTimeout(function(){
+    if(!tarajuFocusSearchLock)stopCamera();
+  },1100);
+}
+
+function nativeScanLoop(){
+  var v=q('taraju-barcode-video');
+  if(!nativeDetector||!v||nativeBusy)return;
+  nativeBusy=true;
+  nativeDetector.detect(v).then(function(items){
+    if(items&&items.length){
+      var item=items[0];
+      var raw=item.rawValue||item.displayValue||'';
+      var fmt=item.format||'';
+      if(raw&&raw!==tarajuLastFocusedBarcode){
+        tarajuLastFocusedBarcode=raw;
+        tarajuFocusSearchLock=true;
+        setBarcodeFocusSearching(true);
+        setStatus('taraju-barcode-scan-status','Barcode focused. Searching product details…','success');
+        showResult(raw,fmt);
+        scheduleFocusedBarcodeStop();
+      }
+    }
+  }).catch(function(){}).finally(function(){
+    nativeBusy=false;
+  });
+}
+
+async function startNative(){
+  var v=q('taraju-barcode-video'),wrap=q('taraju-barcode-camera-wrap');
+  if(!v||!wrap||!('BarcodeDetector' in window))return false;
+  try{
+    tarajuLastFocusedBarcode='';
+    tarajuFocusSearchLock=false;
+    nativeDetector=new BarcodeDetector();
+    scanStream=await navigator.mediaDevices.getUserMedia({
+      video:{
+        facingMode:{ideal:'environment'},
+        width:{ideal:1920},
+        height:{ideal:1080},
+        frameRate:{ideal:30,max:30}
+      },
+      audio:false
+    });
+    await enableContinuousBarcodeFocus(scanStream);
+    v.srcObject=scanStream;
+    v.setAttribute('autofocus','true');
+    await v.play();
+    wrap.hidden=false;
+    setBarcodeFocusSearching(false);
+    setStatus('taraju-barcode-scan-status','Camera active. Focus on the barcode inside the frame.','');
+    nativeTimer=setInterval(nativeScanLoop,280);
+    return true;
+  }catch(e){
+    stopCamera();
+    return false;
+  }
+}
+
 async function ensureZxing(){await loadScript(ZXING_SRC,function(){return !!(window.ZXingBrowser&&window.ZXingBrowser.BrowserMultiFormatReader)});return window.ZXingBrowser}
-async function startZxing(){var v=q('taraju-barcode-video'),wrap=q('taraju-barcode-camera-wrap');try{var z=await ensureZxing();scanner=new z.BrowserMultiFormatReader();wrap.hidden=false;setStatus('taraju-barcode-scan-status','Starting barcode scanner…','');var devices=await z.BrowserCodeReader.listVideoInputDevices();var chosen=devices.length?devices[devices.length-1].deviceId:undefined;scanControls=await scanner.decodeFromVideoDevice(chosen,v,function(result){if(result){var raw=result.getText?result.getText():result.text;var fmt='';try{fmt=result.getBarcodeFormat?String(result.getBarcodeFormat()):''}catch(e){}if(raw){showResult(raw,fmt);stopCamera()}}});setStatus('taraju-barcode-scan-status','Camera active. Place the barcode inside the box.','');return true}catch(e){console.error(e);stopCamera();setStatus('taraju-barcode-scan-status','Camera scanner could not start. Use Upload Barcode instead.','error');return false}}
+async function startZxing(){var v=q('taraju-barcode-video'),wrap=q('taraju-barcode-camera-wrap');try{var z=await ensureZxing();scanner=new z.BrowserMultiFormatReader();wrap.hidden=false;setBarcodeFocusSearching(false);setStatus('taraju-barcode-scan-status','Starting barcode scanner…','');var devices=await z.BrowserCodeReader.listVideoInputDevices();var chosen=devices.length?devices[devices.length-1].deviceId:undefined;scanControls=await scanner.decodeFromVideoDevice(chosen,v,async function(result){if(result){var raw=result.getText?result.getText():result.text;var fmt='';try{fmt=result.getBarcodeFormat?String(result.getBarcodeFormat()):''}catch(e){}if(raw&&raw!==tarajuLastFocusedBarcode){tarajuLastFocusedBarcode=raw;tarajuFocusSearchLock=true;setBarcodeFocusSearching(true);setStatus('taraju-barcode-scan-status','Barcode focused. Searching product details…','success');showResult(raw,fmt);scheduleFocusedBarcodeStop()}}});setTimeout(function(){try{enableContinuousBarcodeFocus(v.srcObject)}catch(e){}},250);setStatus('taraju-barcode-scan-status','Camera active. Focus on the barcode inside the frame.','');return true}catch(e){console.error(e);stopCamera();setStatus('taraju-barcode-scan-status','Camera scanner could not start. Use Upload Barcode instead.','error');return false}}
 async function startCamera(){stopCamera();if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){setStatus('taraju-barcode-scan-status','Camera is unavailable in this browser. Use Upload Barcode instead.','error');return}if(await startNative())return;await startZxing()}
 async function tarajuDecodeImageWithPasses(file){
   var z=await ensureZxing();
@@ -5813,7 +5936,7 @@ function syncBarcodeUnitModal(){var select=q('barcode-item-unit'),value=q('barco
 function openBarcodeUnitModal(){var modal=q('barcodeUnitModal'),trigger=q('barcode-item-unit-trigger');if(!modal)return;syncBarcodeUnitModal();modal.classList.add('active');modal.setAttribute('aria-hidden','false');if(trigger)trigger.setAttribute('aria-expanded','true');document.body.style.overflow='hidden';var current=document.querySelector('#barcodeUnitOptions .barcode-unit-option.selected');if(current)setTimeout(function(){try{current.focus()}catch(e){}},0)}
 function closeBarcodeUnitModal(){var modal=q('barcodeUnitModal'),trigger=q('barcode-item-unit-trigger');if(!modal)return;modal.classList.remove('active');modal.setAttribute('aria-hidden','true');if(trigger)trigger.setAttribute('aria-expanded','false');document.body.style.removeProperty('overflow');if(trigger)try{trigger.focus()}catch(e){}}
 function selectBarcodeUnit(unit){var select=q('barcode-item-unit');if(!select)return;var wanted=String(unit||'PCS');var option=Array.from(select.options||[]).find(function(o){return o.value===wanted});if(!option)return;select.value=wanted;syncBarcodeUnitModal();select.dispatchEvent(new Event('change',{bubbles:true}));closeBarcodeUnitModal()}
-function setMode(mode){var gen=q('barcode-generate-panel'),scan=q('barcode-scan-panel'),gb=q('barcode-mode-generate'),sb=q('barcode-mode-scan');var isScan=mode==='scan';if(gen)gen.hidden=isScan;if(scan)scan.hidden=!isScan;if(gb){gb.classList.toggle('active',!isScan);gb.setAttribute('aria-selected',String(!isScan))}if(sb){sb.classList.toggle('active',isScan);sb.setAttribute('aria-selected',String(isScan))}if(!isScan)stopCamera()}
+function setMode(mode){if(mode!=='scan'){tarajuLastFocusedBarcode='';}else{tarajuLastFocusedBarcode='';}var gen=q('barcode-generate-panel'),scan=q('barcode-scan-panel'),gb=q('barcode-mode-generate'),sb=q('barcode-mode-scan');var isScan=mode==='scan';if(gen)gen.hidden=isScan;if(scan)scan.hidden=!isScan;if(gb){gb.classList.toggle('active',!isScan);gb.setAttribute('aria-selected',String(!isScan))}if(sb){sb.classList.toggle('active',isScan);sb.setAttribute('aria-selected',String(isScan))}if(!isScan)stopCamera()}
 function init(){q('barcode-mode-generate')?.addEventListener('click',function(){setMode('generate')});q('barcode-mode-scan')?.addEventListener('click',function(){setMode('scan')});q('barcode-generate-form')?.addEventListener('submit',function(e){e.preventDefault();generate()});q('barcode-generate-clear')?.addEventListener('click',clearGenerate);q('barcode-download-svg')?.addEventListener('click',downloadSvg);q('barcode-download-png')?.addEventListener('click',downloadPng);q('barcode-camera-start')?.addEventListener('click',startCamera);q('barcode-camera-stop')?.addEventListener('click',stopCamera);q('barcode-image-input')?.addEventListener('change',function(){var file=this.files&&this.files[0];if(file)scanUploaded(file);this.value=''});q('barcode-item-unit-trigger')?.addEventListener('click',openBarcodeUnitModal);q('barcodeUnitModalClose')?.addEventListener('click',closeBarcodeUnitModal);q('barcodeUnitModal')?.addEventListener('click',function(e){if(e.target===this)closeBarcodeUnitModal()});document.querySelectorAll('#barcodeUnitOptions .barcode-unit-option').forEach(function(btn){btn.addEventListener('click',function(){selectBarcodeUnit(this.getAttribute('data-unit'))})});q('barcode-item-unit')?.addEventListener('change',syncBarcodeUnitModal);syncBarcodeUnitModal();}
 window.tarajuBarcodeStop=stopCamera;
 window.tarajuBarcodeSetMode=setMode;
