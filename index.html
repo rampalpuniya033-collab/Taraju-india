@@ -5492,14 +5492,42 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 'use strict';
 var scanner=null, scanControls=null, scanStream=null, nativeDetector=null, nativeTimer=null, nativeBusy=false, lastBarcodeValue='';
 var barcodeScanAudioContext=null, lastBarcodeSoundValue='';
+var tarajuScanCandidate='', tarajuScanCandidateSince=0, tarajuScanCandidateLastSeen=0;
+var TARAJU_SCAN_CONFIRM_MS=2000, TARAJU_SCAN_LOST_MS=900;
 var JSBARCODE_SRC='https://cdn.jsdelivr.net/npm/jsbarcode@3.12.3/dist/JsBarcode.all.min.js';
 var ZXING_SRC='https://unpkg.com/@zxing/browser@0.1.5/umd/zxing-browser.min.js';
 function q(id){return document.getElementById(id)}
 function t(en){return en}
 function setStatus(id,msg,kind){var n=q(id);if(!n)return;n.textContent=msg||'';n.className='barcode-inline-status '+(kind||'')}
 function setBarcodeScanLive(text,detected){var box=q('taraju-barcode-scan-live'),label=q('taraju-barcode-scan-live-text');if(label)label.textContent=text||'';if(box)box.classList.toggle('detected',!!detected)}
+function resetBarcodeScanCandidate(){tarajuScanCandidate='';tarajuScanCandidateSince=0;tarajuScanCandidateLastSeen=0;}
+function handleCameraBarcodeDetection(raw,fmt){
+  raw=String(raw||'').trim();
+  if(!raw)return false;
+  var now=Date.now();
+  if(tarajuScanCandidate!==raw){
+    tarajuScanCandidate=raw;
+    tarajuScanCandidateSince=now;
+    tarajuScanCandidateLastSeen=now;
+    setBarcodeFocusSearching(true);
+    setStatus('taraju-barcode-scan-status','Barcode detected. Hold steady for 2 seconds…','success');
+    setBarcodeScanLive('Reading barcode… 2 seconds',false);
+    return false;
+  }
+  tarajuScanCandidateLastSeen=now;
+  if(now-tarajuScanCandidateSince<TARAJU_SCAN_CONFIRM_MS)return false;
+  if(raw===tarajuLastFocusedBarcode)return true;
+  tarajuLastFocusedBarcode=raw;
+  tarajuFocusSearchLock=true;
+  setBarcodeFocusSearching(true);
+  setStatus('taraju-barcode-scan-status','Barcode scan complete. Opening details…','success');
+  setBarcodeScanLive('Barcode scanned • Opening details…',true);
+  showResult(raw,fmt);
+  scheduleFocusedBarcodeStop();
+  return true;
+}
 function unlockBarcodeScanSound(){try{var C=window.AudioContext||window.webkitAudioContext;if(!C)return null;if(!barcodeScanAudioContext)barcodeScanAudioContext=new C();if(barcodeScanAudioContext.state==='suspended')barcodeScanAudioContext.resume().catch(function(){});return barcodeScanAudioContext}catch(e){return null}}
-function playBarcodeScanSound(raw){try{if(!raw||String(raw)===lastBarcodeSoundValue)return;lastBarcodeSoundValue=String(raw);var ctx=unlockBarcodeScanSound();if(!ctx)return;var now=ctx.currentTime;var master=ctx.createGain();master.gain.setValueAtTime(0.0001,now);master.gain.exponentialRampToValueAtTime(0.16,now+0.008);master.gain.exponentialRampToValueAtTime(0.0001,now+0.13);master.connect(ctx.destination);var o1=ctx.createOscillator();o1.type='sine';o1.frequency.setValueAtTime(880,now);o1.frequency.exponentialRampToValueAtTime(1046.5,now+0.12);o1.connect(master);o1.start(now);o1.stop(now+0.14);var gain2=ctx.createGain();gain2.gain.setValueAtTime(0.0001,now+0.10);gain2.gain.exponentialRampToValueAtTime(0.13,now+0.108);gain2.gain.exponentialRampToValueAtTime(0.0001,now+0.24);gain2.connect(ctx.destination);var o2=ctx.createOscillator();o2.type='sine';o2.frequency.setValueAtTime(1174.66,now+0.10);o2.connect(gain2);o2.start(now+0.10);o2.stop(now+0.25);o2.onended=function(){try{master.disconnect();gain2.disconnect()}catch(e){}};o1.onended=function(){try{o1.disconnect()}catch(e){}}}catch(e){}}
+function playBarcodeScanSound(raw){try{if(!raw||String(raw)===lastBarcodeSoundValue)return;lastBarcodeSoundValue=String(raw);var ctx=unlockBarcodeScanSound();if(!ctx)return;var now=ctx.currentTime;var master=ctx.createGain();master.gain.setValueAtTime(0.0001,now);master.gain.exponentialRampToValueAtTime(0.28,now+0.008);master.gain.exponentialRampToValueAtTime(0.0001,now+0.13);master.connect(ctx.destination);var o1=ctx.createOscillator();o1.type='sine';o1.frequency.setValueAtTime(880,now);o1.frequency.exponentialRampToValueAtTime(1046.5,now+0.12);o1.connect(master);o1.start(now);o1.stop(now+0.14);var gain2=ctx.createGain();gain2.gain.setValueAtTime(0.0001,now+0.10);gain2.gain.exponentialRampToValueAtTime(0.22,now+0.108);gain2.gain.exponentialRampToValueAtTime(0.0001,now+0.24);gain2.connect(ctx.destination);var o2=ctx.createOscillator();o2.type='sine';o2.frequency.setValueAtTime(1174.66,now+0.10);o2.connect(gain2);o2.start(now+0.10);o2.stop(now+0.25);o2.onended=function(){try{master.disconnect();gain2.disconnect()}catch(e){}};o1.onended=function(){try{o1.disconnect()}catch(e){}}}catch(e){}}
 function loadScript(src,test){return new Promise(function(resolve,reject){if(test&&test()){resolve();return}var old=document.querySelector('script[data-taraju-barcode-src="'+src.replace(/"/g,'&quot;')+'"]');if(old){if(test&&test())resolve();else old.addEventListener('load',function(){resolve()},{once:true});old.addEventListener('error',function(){reject(new Error('Library load failed'))},{once:true});return}var s=document.createElement('script');s.src=src;s.async=true;s.dataset.tarajuBarcodeSrc=src;s.onload=function(){if(!test||test())resolve();else reject(new Error('Library unavailable'))};s.onerror=function(){reject(new Error('Library load failed'))};document.head.appendChild(s)})}
 function utf8b64(str){var bytes=new TextEncoder().encode(str),bin='';for(var i=0;i<bytes.length;i++)bin+=String.fromCharCode(bytes[i]);return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
 function b64utf8(str){try{var b=str.replace(/-/g,'+').replace(/_/g,'/');while(b.length%4)b+='=';var bin=atob(b),bytes=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);return new TextDecoder().decode(bytes)}catch(e){return null}}
@@ -5887,7 +5915,7 @@ function openFullBarcodeCamera(){
 function closeFullBarcodeCamera(){
   document.body.classList.remove('taraju-full-camera-open');
 }
-function stopCamera(){closeFullBarcodeCamera();tarajuFocusSearchLock=false;setBarcodeFocusSearching(false);setBarcodeScanLive('Scanner stopped.',false);if(nativeTimer){clearInterval(nativeTimer);nativeTimer=null}nativeBusy=false;if(scanControls){try{scanControls.stop()}catch(e){}scanControls=null}if(scanner){try{scanner.reset()}catch(e){}scanner=null}if(scanStream){scanStream.getTracks().forEach(function(track){try{track.stop()}catch(e){}});scanStream=null}var v=q('taraju-barcode-video');if(v){try{v.pause()}catch(e){}v.srcObject=null}var wrap=q('taraju-barcode-camera-wrap');if(wrap)wrap.hidden=true}
+function stopCamera(){closeFullBarcodeCamera();resetBarcodeScanCandidate();tarajuFocusSearchLock=false;setBarcodeFocusSearching(false);setBarcodeScanLive('Scanner stopped.',false);if(nativeTimer){clearInterval(nativeTimer);nativeTimer=null}nativeBusy=false;if(scanControls){try{scanControls.stop()}catch(e){}scanControls=null}if(scanner){try{scanner.reset()}catch(e){}scanner=null}if(scanStream){scanStream.getTracks().forEach(function(track){try{track.stop()}catch(e){}});scanStream=null}var v=q('taraju-barcode-video');if(v){try{v.pause()}catch(e){}v.srcObject=null}var wrap=q('taraju-barcode-camera-wrap');if(wrap)wrap.hidden=true}
 var tarajuLastFocusedBarcode='';
 var tarajuFocusSearchLock=false;
 
@@ -5932,14 +5960,12 @@ function nativeScanLoop(){
       var item=items[0];
       var raw=item.rawValue||item.displayValue||'';
       var fmt=item.format||'';
-      if(raw&&raw!==tarajuLastFocusedBarcode){
-        tarajuLastFocusedBarcode=raw;
-        tarajuFocusSearchLock=true;
-        setBarcodeFocusSearching(true);
-        setStatus('taraju-barcode-scan-status','Barcode focused. Searching product details…','success');
-        showResult(raw,fmt);
-        scheduleFocusedBarcodeStop();
-      }
+      handleCameraBarcodeDetection(raw,fmt);
+    }else if(tarajuScanCandidate && Date.now()-tarajuScanCandidateLastSeen>TARAJU_SCAN_LOST_MS){
+      resetBarcodeScanCandidate();
+      setBarcodeFocusSearching(false);
+      setStatus('taraju-barcode-scan-status','Point the main camera at the barcode and hold steady for 2 seconds.','');
+      setBarcodeScanLive('Scanning with 50MP Main Camera… Hold steady 2 seconds',false);
     }
   }).catch(function(){}).finally(function(){
     nativeBusy=false;
@@ -6002,6 +6028,7 @@ async function startNative(){
     unlockBarcodeScanSound();
     tarajuLastFocusedBarcode='';
     tarajuFocusSearchLock=false;
+    resetBarcodeScanCandidate();
     nativeDetector=new BarcodeDetector();
 
     // First obtain rear-camera permission so Chrome/Android exposes camera labels,
@@ -6066,7 +6093,7 @@ async function startNative(){
     openFullBarcodeCamera();
     setBarcodeFocusSearching(false);
     setStatus('taraju-barcode-scan-status','50MP main rear camera prioritized. Point the main camera at the barcode.','');
-    setBarcodeScanLive('Scanning with 50MP Main Camera…',false);
+    setBarcodeScanLive('Scanning with 50MP Main Camera… Hold steady 2 seconds',false);
     nativeTimer=setInterval(nativeScanLoop,280);
     return true;
   }catch(e){
@@ -6076,8 +6103,8 @@ async function startNative(){
 }
 
 async function ensureZxing(){await loadScript(ZXING_SRC,function(){return !!(window.ZXingBrowser&&window.ZXingBrowser.BrowserMultiFormatReader)});return window.ZXingBrowser}
-async function startZxing(){var v=q('taraju-barcode-video'),wrap=q('taraju-barcode-camera-wrap');try{unlockBarcodeScanSound();var z=await ensureZxing();scanner=new z.BrowserMultiFormatReader();wrap.hidden=false;openFullBarcodeCamera();setBarcodeFocusSearching(false);setStatus('taraju-barcode-scan-status','Starting barcode scanner…','');try{var warm=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}});warm.getTracks().forEach(function(t){try{t.stop()}catch(e){}})}catch(e){}var devices=await z.BrowserCodeReader.listVideoInputDevices();var rear=devices.filter(function(d){return !/front|user|selfie/i.test(String(d.label||''))});rear=rear.filter(function(d){return /back|rear|environment|camera|main|primary/i.test(String(d.label||''))}).length?rear.filter(function(d){return /back|rear|environment|camera|main|primary/i.test(String(d.label||''))}):rear;rear.sort(function(a,b){function score(d){var l=String(d.label||'').toLowerCase(),s=0;if(/50\s*mp|imx890|main|primary/i.test(l))s+=120;if(/back|rear|environment/i.test(l))s+=70;if(/wide|ultra[- ]?wide|macro/i.test(l))s-=100;return s}return score(b)-score(a)});var chosen=rear.length?rear[0].deviceId:(devices.length?devices[devices.length-1].deviceId:undefined);scanControls=await scanner.decodeFromVideoDevice(chosen,v,async function(result){if(result){var raw=result.getText?result.getText():result.text;var fmt='';try{fmt=result.getBarcodeFormat?String(result.getBarcodeFormat()):''}catch(e){}if(raw&&raw!==tarajuLastFocusedBarcode){tarajuLastFocusedBarcode=raw;tarajuFocusSearchLock=true;setBarcodeFocusSearching(true);setStatus('taraju-barcode-scan-status','Barcode detected. Reading product details…','success');showResult(raw,fmt);scheduleFocusedBarcodeStop()}}});setTimeout(function(){try{enableContinuousBarcodeFocus(v.srcObject)}catch(e){}},250);setStatus('taraju-barcode-scan-status','50MP main rear camera prioritized. Point the main camera at the barcode.','');setBarcodeScanLive('Scanning with 50MP Main Camera…',false);return true}catch(e){console.error(e);stopCamera();setStatus('taraju-barcode-scan-status','Camera scanner could not start. Use Upload Barcode instead.','error');return false}}
-async function startCamera(){stopCamera();unlockBarcodeScanSound();lastBarcodeSoundValue='';setBarcodeScanLive('Starting 50MP Main Camera…',false);if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){setStatus('taraju-barcode-scan-status','Camera is unavailable in this browser. Use Upload Barcode instead.','error');return}if(await startNative())return;await startZxing()}
+async function startZxing(){var v=q('taraju-barcode-video'),wrap=q('taraju-barcode-camera-wrap');try{unlockBarcodeScanSound();resetBarcodeScanCandidate();var z=await ensureZxing();scanner=new z.BrowserMultiFormatReader();wrap.hidden=false;openFullBarcodeCamera();setBarcodeFocusSearching(false);setStatus('taraju-barcode-scan-status','Starting barcode scanner…','');try{var warm=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}});warm.getTracks().forEach(function(t){try{t.stop()}catch(e){}})}catch(e){}var devices=await z.BrowserCodeReader.listVideoInputDevices();var rear=devices.filter(function(d){return !/front|user|selfie/i.test(String(d.label||''))});rear=rear.filter(function(d){return /back|rear|environment|camera|main|primary/i.test(String(d.label||''))}).length?rear.filter(function(d){return /back|rear|environment|camera|main|primary/i.test(String(d.label||''))}):rear;rear.sort(function(a,b){function score(d){var l=String(d.label||'').toLowerCase(),s=0;if(/50\s*mp|imx890|main|primary/i.test(l))s+=120;if(/back|rear|environment/i.test(l))s+=70;if(/wide|ultra[- ]?wide|macro/i.test(l))s-=100;return s}return score(b)-score(a)});var chosen=rear.length?rear[0].deviceId:(devices.length?devices[devices.length-1].deviceId:undefined);scanControls=await scanner.decodeFromVideoDevice(chosen,v,async function(result){if(result){var raw=result.getText?result.getText():result.text;var fmt='';try{fmt=result.getBarcodeFormat?String(result.getBarcodeFormat()):''}catch(e){}if(raw)handleCameraBarcodeDetection(raw,fmt)} });setTimeout(function(){try{enableContinuousBarcodeFocus(v.srcObject)}catch(e){}},250);setStatus('taraju-barcode-scan-status','50MP main rear camera prioritized. Point the main camera at the barcode.','');setBarcodeScanLive('Scanning with 50MP Main Camera… Hold steady 2 seconds',false);return true}catch(e){console.error(e);stopCamera();setStatus('taraju-barcode-scan-status','Camera scanner could not start. Use Upload Barcode instead.','error');return false}}
+async function startCamera(){stopCamera();resetBarcodeScanCandidate();unlockBarcodeScanSound();lastBarcodeSoundValue='';setBarcodeScanLive('Starting 50MP Main Camera…',false);if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){setStatus('taraju-barcode-scan-status','Camera is unavailable in this browser. Use Upload Barcode instead.','error');return}if(await startNative())return;await startZxing()}
 async function tarajuDecodeImageWithPasses(file){
   var z=await ensureZxing();
   var reader=new z.BrowserMultiFormatReader();
@@ -6163,7 +6190,7 @@ function syncBarcodeUnitModal(){var select=q('barcode-item-unit'),value=q('barco
 function openBarcodeUnitModal(){var modal=q('barcodeUnitModal'),trigger=q('barcode-item-unit-trigger');if(!modal)return;syncBarcodeUnitModal();modal.classList.add('active');modal.setAttribute('aria-hidden','false');if(trigger)trigger.setAttribute('aria-expanded','true');document.body.style.overflow='hidden';var current=document.querySelector('#barcodeUnitOptions .barcode-unit-option.selected');if(current)setTimeout(function(){try{current.focus()}catch(e){}},0)}
 function closeBarcodeUnitModal(){var modal=q('barcodeUnitModal'),trigger=q('barcode-item-unit-trigger');if(!modal)return;modal.classList.remove('active');modal.setAttribute('aria-hidden','true');if(trigger)trigger.setAttribute('aria-expanded','false');document.body.style.removeProperty('overflow');if(trigger)try{trigger.focus()}catch(e){}}
 function selectBarcodeUnit(unit){var select=q('barcode-item-unit');if(!select)return;var wanted=String(unit||'PCS');var option=Array.from(select.options||[]).find(function(o){return o.value===wanted});if(!option)return;select.value=wanted;syncBarcodeUnitModal();select.dispatchEvent(new Event('change',{bubbles:true}));closeBarcodeUnitModal()}
-function setMode(mode){if(mode!=='scan'){tarajuLastFocusedBarcode='';}else{tarajuLastFocusedBarcode='';}var gen=q('barcode-generate-panel'),scan=q('barcode-scan-panel'),gb=q('barcode-mode-generate'),sb=q('barcode-mode-scan');var isScan=mode==='scan';if(gen)gen.hidden=isScan;if(scan)scan.hidden=!isScan;if(gb){gb.classList.toggle('active',!isScan);gb.setAttribute('aria-selected',String(!isScan))}if(sb){sb.classList.toggle('active',isScan);sb.setAttribute('aria-selected',String(isScan))}if(!isScan)stopCamera()}
+function setMode(mode){resetBarcodeScanCandidate();if(mode!=='scan'){tarajuLastFocusedBarcode='';}else{tarajuLastFocusedBarcode='';}var gen=q('barcode-generate-panel'),scan=q('barcode-scan-panel'),gb=q('barcode-mode-generate'),sb=q('barcode-mode-scan');var isScan=mode==='scan';if(gen)gen.hidden=isScan;if(scan)scan.hidden=!isScan;if(gb){gb.classList.toggle('active',!isScan);gb.setAttribute('aria-selected',String(!isScan))}if(sb){sb.classList.toggle('active',isScan);sb.setAttribute('aria-selected',String(isScan))}if(!isScan)stopCamera()}
 function init(){q('barcode-mode-generate')?.addEventListener('click',function(){setMode('generate')});q('barcode-mode-scan')?.addEventListener('click',function(){setMode('scan')});q('barcode-generate-form')?.addEventListener('submit',function(e){e.preventDefault();generate()});q('barcode-generate-clear')?.addEventListener('click',clearGenerate);q('barcode-download-svg')?.addEventListener('click',downloadSvg);q('barcode-download-png')?.addEventListener('click',downloadPng);q('barcode-camera-start')?.addEventListener('click',startCamera);q('barcode-camera-stop')?.addEventListener('click',stopCamera);q('barcode-image-input')?.addEventListener('change',function(){var file=this.files&&this.files[0];if(file)scanUploaded(file);this.value=''});q('barcode-item-unit-trigger')?.addEventListener('click',openBarcodeUnitModal);q('barcodeUnitModalClose')?.addEventListener('click',closeBarcodeUnitModal);q('barcodeUnitModal')?.addEventListener('click',function(e){if(e.target===this)closeBarcodeUnitModal()});document.querySelectorAll('#barcodeUnitOptions .barcode-unit-option').forEach(function(btn){btn.addEventListener('click',function(){selectBarcodeUnit(this.getAttribute('data-unit'))})});q('barcode-item-unit')?.addEventListener('change',syncBarcodeUnitModal);syncBarcodeUnitModal();}
 window.tarajuBarcodeStop=stopCamera;
 window.tarajuBarcodeSetMode=setMode;
@@ -6172,16 +6199,134 @@ window.addEventListener('pagehide',function(){stopCamera();closeBarcodeUnitModal
 })();
 </script>
 
-<script id="taraju-barcode-full-camera-back-handler">
+<script id="taraju-app-hardware-back-system">
 (function(){
-  if(window.__tarajuFullCameraBackInstalled)return;
-  window.__tarajuFullCameraBackInstalled=true;
-  window.addEventListener('popstate',function(){
-    if(document.body.classList.contains('taraju-full-camera-open')){
-      try{window.history.forward()}catch(e){}
-      try{stopCamera()}catch(e){}
+  if(window.__tarajuAppBackSystemInstalled)return;
+  window.__tarajuAppBackSystemInstalled=true;
+  var handlingPop=false;
+  var historyReady=false;
+
+  function persistStack(){
+    try{localStorage.setItem(TARAJU_NAV_STACK_KEY,JSON.stringify(navStack));}catch(e){}
+  }
+  function pushAppState(screenId,replace){
+    try{
+      var state={taraju:true,screen:screenId||currentScreenId,ts:Date.now()};
+      if(replace)history.replaceState(state,'',location.href);
+      else history.pushState(state,'',location.href);
+    }catch(e){}
+  }
+  function closeTopLayer(){
+    try{
+      if(document.body.classList.contains('taraju-full-camera-open')){
+        if(typeof stopCamera==='function')stopCamera();
+        return true;
+      }
+    }catch(e){}
+    try{
+      var menu=document.getElementById('slideMenu');
+      if(menu&&menu.classList.contains('open')){if(typeof closeSlideMenu==='function')closeSlideMenu();return true;}
+    }catch(e){}
+    try{
+      var barcodeUnit=document.getElementById('barcodeUnitModal');
+      if(barcodeUnit&&barcodeUnit.classList.contains('active')&&typeof closeBarcodeUnitModal==='function'){closeBarcodeUnitModal();return true;}
+    }catch(e){}
+    try{
+      var active=document.querySelector('.modal-overlay.active, .modal.active');
+      if(active){
+        active.classList.remove('active');
+        active.setAttribute('aria-hidden','true');
+        document.body.style.removeProperty('overflow');
+        return true;
+      }
+    }catch(e){}
+    return false;
+  }
+  function internalBack(){
+    if(moreAppOpenedScreens.has(currentScreenId)&&navStack.length>0&&navStack[navStack.length-1]==='screen-home'){
+      navStack.pop();
+      moreAppOpenedScreens.delete(currentScreenId);
+      persistStack();
+      switchScreen('screen-home');
+      showModal('moreAppsModal');
+      return;
     }
+    if(navStack.length>0){
+      var previous=navStack.pop();
+      persistStack();
+      switchScreen(previous);
+    }else if(currentScreenId!=='screen-home'){
+      switchScreen('screen-home');
+    }
+  }
+
+  window.__tarajuNavigateWithHistory=function(screenId){
+    if(historyReady&&!handlingPop){pushAppState(screenId,false);}
+  };
+  window.__tarajuHardwareBackInternal=internalBack;
+
+  // Keep the existing in-app header/back buttons working, but let the browser
+  // history drive the hardware Back button so navigation happens one step at a time.
+  var originalNavigateTo=window.navigateTo;
+  if(typeof originalNavigateTo==='function'&&!originalNavigateTo.__tarajuWrapped){
+    var wrappedNavigate=function(screenId){
+      if(screenId===currentScreenId)return;
+      originalNavigateTo(screenId);
+      if(historyReady&&!handlingPop)pushAppState(screenId,false);
+    };
+    wrappedNavigate.__tarajuWrapped=true;
+    window.navigateTo=wrappedNavigate;
+  }
+
+  var originalGoBack=window.goBack;
+  window.goBack=function(){
+    if(historyReady&&!handlingPop&&(navStack.length>0||currentScreenId!=='screen-home')){
+      try{history.back();return;}catch(e){}
+    }
+    if(typeof originalGoBack==='function')originalGoBack();
+  };
+
+  var originalLimitedNavTo=window.limitedNavTo;
+  window.limitedNavTo=function(screenId){
+    if(!screenId||screenId===currentScreenId)return;
+    navStack=(screenId==='screen-home')?[]:['screen-home'];
+    persistStack();
+    switchScreen(screenId);
+    updateLimitedNav();
+    if(historyReady&&!handlingPop)pushAppState(screenId,false);
+  };
+  void originalLimitedNavTo;
+
+  window.addEventListener('popstate',function(){
+    // A hardware Back press should first close the topmost camera/menu/modal.
+    if(closeTopLayer()){
+      pushAppState(currentScreenId,true);
+      return;
+    }
+    handlingPop=true;
+    try{
+      if(navStack.length>0||currentScreenId!=='screen-home')internalBack();
+    }finally{handlingPop=false;}
   });
+
+  function initHistory(){
+    if(historyReady)return;
+    historyReady=true;
+    try{
+      var st=history.state;
+      if(st&&st.taraju)return;
+      // Rebuild the in-app history chain from the app's existing navigation stack.
+      var chain=Array.isArray(navStack)?navStack.slice():[];
+      chain.push(currentScreenId);
+      var clean=[];
+      chain.forEach(function(id){if(/^screen-[a-z0-9-]+$/.test(String(id)) && (clean.length===0||clean[clean.length-1]!==id))clean.push(id);});
+      if(!clean.length)clean=['screen-home'];
+      history.replaceState({taraju:true,screen:clean[0],base:true},'',location.href);
+      for(var i=1;i<clean.length;i++)pushAppState(clean[i],false);
+    }catch(e){}
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(initHistory,0)},{once:true});
+  else setTimeout(initHistory,0);
 })();
 </script>
 </body></html>
