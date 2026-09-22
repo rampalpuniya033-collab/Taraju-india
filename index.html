@@ -6553,14 +6553,28 @@ window.addEventListener('pagehide',function(){stopCamera();closeBarcodeUnitModal
   }
   async function saveDocument(kind,payload,title){
     try{
-      var a=await getFirebaseParts();var user=a.auth.currentUser;
-      if(!user){try{user=await a.authMod.signInAnonymously(a.auth)}catch(e){console.warn('Anonymous Firebase sign-in unavailable:',e);return null}}
-      if(!user)return null;
+      var a=await getFirebaseParts();
+      var user=a.auth.currentUser;
+      if(!user){
+        try{
+          user=await a.authMod.signInAnonymously(a.auth);
+        }catch(anonymousError){
+          console.warn('Anonymous Firebase sign-in unavailable:',anonymousError);
+          var msg=String(anonymousError&&anonymousError.message||anonymousError||'');
+          announce(langText('Cloud save के लिए Firebase Console में Anonymous Sign-in चालू करें।','Enable Anonymous Sign-in in Firebase Console to save documents to Cloud.'));
+          return {error:true,reason:'auth',message:msg};
+        }
+      }
+      if(!user)return {error:true,reason:'auth',message:'No Firebase user'};
       var id=newDocId();
       await a.fs.setDoc(a.fs.doc(a.db,CLOUD_COLLECTION,id),{id:id,recordType:'document',kind:String(kind||'document'),title:String(title||''),ownerUid:user.uid||'',ownerEmail:user.email||'',payload:safe(payload||{}),createdAtClient:new Date().toISOString(),updatedAt:a.fs.serverTimestamp()});
       var u=new URL(location.href);u.searchParams.set('tarajuDoc',id);u.hash='';
       return {id:id,url:u.toString()};
-    }catch(e){console.error('Taraju cloud document save failed:',e);return null}
+    }catch(e){
+      console.error('Taraju cloud document save failed:',e);
+      announce(langText('Cloud में document save नहीं हो पाया। Firestore Rules और Firebase Authentication जाँचें।','Document could not be saved to Cloud. Check Firestore Rules and Firebase Authentication.'));
+      return {error:true,reason:'firestore',message:String(e&&e.message||e||'')};
+    }
   }
   async function loadDocument(id){try{var a=await getFirebaseParts();var snap=await a.fs.getDoc(a.fs.doc(a.db,CLOUD_COLLECTION,String(id)));return snap.exists()?snap.data():null}catch(e){console.error('Taraju cloud document load failed:',e);return null}}
   function addQrStyles(){
@@ -6617,11 +6631,64 @@ window.addEventListener('pagehide',function(){stopCamera();closeBarcodeUnitModal
     return await saveDocument('resume',payload,name+' Resume');
   }
   async function saveBillCloud(bill){if(!bill)return null;return await saveDocument('bill',{bill:safe(bill)},'Bill '+String(bill.billNo||''))}
-  function getResumeQrHost(){var h=document.querySelector('#screen-resume-preview .resume-full-preview');if(h)return h;var layer=document.getElementById('taraju-resume-preview-layer');if(layer){var b=layer.querySelector('.trp-body');if(b)return b}return null}
-  async function addResumeQr(){var result=await saveResumeCloud(),host=getResumeQrHost();if(!host)return result;if(result)makeQrCard(host,result.id,result.url);return result}
-  async function addBillQr(){var bill=window.lastSavedBillData||null;if(!bill)return null;var result=await saveBillCloud(bill),content=document.getElementById('bill-modal-content');if(content&&result)makeQrCard(content,result.id,result.url);return result}
-  function installResumeHook(){var original=window.resumeOpenPreview;if(typeof original!=='function'||original.__tarajuCloudDocWrapped)return false;var wrapped=function(){var out=original.apply(this,arguments);setTimeout(function(){addResumeQr().catch(function(e){console.warn(e)})},700);return out};wrapped.__tarajuCloudDocWrapped=true;window.resumeOpenPreview=wrapped;return true}
-  function installBillHook(){var original=window.completeBill;if(typeof original!=='function'||original.__tarajuCloudDocWrapped)return false;var wrapped=function(){var out=original.apply(this,arguments);setTimeout(function(){addBillQr().catch(function(e){console.warn(e)})},700);return out};wrapped.__tarajuCloudDocWrapped=true;window.completeBill=wrapped;return true}
+  function getResumeQrHost(){
+    var layer=document.getElementById('taraju-resume-preview-layer');
+    if(layer){
+      var body=layer.querySelector('.trp-body');
+      if(body)return body;
+    }
+    var preview=document.getElementById('screen-resume-preview');
+    if(preview){var host=preview.querySelector('.resume-full-preview');if(host)return host;}
+    return null;
+  }
+  function showCloudErrorCard(host,message){
+    if(!host)return;
+    var old=host.querySelector(':scope > .taraju-cloud-qr-card');if(old)old.remove();
+    var card=document.createElement('div');card.className='taraju-cloud-qr-card';
+    card.innerHTML='<div class="taraju-cloud-qr-title">Cloud QR</div><div class="taraju-cloud-qr-sub">'+String(message||'Cloud save is not available yet.')+'</div>';
+    host.appendChild(card);
+  }
+  async function addResumeQr(){
+    var host=getResumeQrHost();
+    if(!host)return null;
+    var result=await saveResumeCloud();
+    if(result&&result.id&&result.url){makeQrCard(host,result.id,result.url);return result;}
+    showCloudErrorCard(host,langText('QR बनाने के लिए Firebase Anonymous Sign-in और Firestore Rules सक्षम करें।','Enable Firebase Anonymous Sign-in and Firestore Rules to generate the Cloud QR.'));
+    return result;
+  }
+  async function addBillQr(){
+    var bill=null;
+    try{bill=(typeof lastSavedBillData!=='undefined'&&lastSavedBillData)?lastSavedBillData:null}catch(e){}
+    if(!bill){try{bill=window.__tarajuLastBillForCloud||null}catch(e){}}
+    var content=document.getElementById('bill-modal-content');
+    if(!bill){showCloudErrorCard(content,langText('Bill data उपलब्ध नहीं है।','Bill data is not available.'));return null;}
+    var result=await saveBillCloud(bill);
+    if(result&&result.id&&result.url){makeQrCard(content,result.id,result.url);return result;}
+    showCloudErrorCard(content,langText('QR बनाने के लिए Firebase Anonymous Sign-in और Firestore Rules सक्षम करें।','Enable Firebase Anonymous Sign-in and Firestore Rules to generate the Cloud QR.'));
+    return result;
+  }
+  function installResumeHook(){
+    var original=window.resumeOpenPreview;
+    if(typeof original!=='function'||original.__tarajuCloudDocWrapped)return false;
+    var wrapped=function(){
+      var out=original.apply(this,arguments);
+      setTimeout(function(){addResumeQr().catch(function(e){console.warn('Resume Cloud QR:',e)})},450);
+      setTimeout(function(){addResumeQr().catch(function(e){console.warn('Resume Cloud QR retry:',e)})},1400);
+      return out;
+    };
+    wrapped.__tarajuCloudDocWrapped=true;window.resumeOpenPreview=wrapped;return true;
+  }
+  function installBillHook(){
+    var original=window.completeBill;
+    if(typeof original!=='function'||original.__tarajuCloudDocWrapped)return false;
+    var wrapped=function(){
+      var out=original.apply(this,arguments);
+      setTimeout(function(){try{window.__tarajuLastBillForCloud=(typeof lastSavedBillData!=='undefined'?lastSavedBillData:null)}catch(e){};addBillQr().catch(function(e){console.warn('Bill Cloud QR:',e)})},350);
+      setTimeout(function(){addBillQr().catch(function(e){console.warn('Bill Cloud QR retry:',e)})},1500);
+      return out;
+    };
+    wrapped.__tarajuCloudDocWrapped=true;window.completeBill=wrapped;return true;
+  }
   async function downloadCloudResume(data){try{var paper=document.getElementById('resume-paper');if(paper){paper.innerHTML=String(data.html||'');paper.style.display='block';paper.style.width='794px';paper.style.maxWidth='none'}var nameEl=document.getElementById('resume-name');if(nameEl)nameEl.value=String(data.name||'Resume');if(typeof window.resumeDownloadPdf==='function'){await window.resumeDownloadPdf();return}window.print()}catch(e){console.error(e);window.print()}}
   function cloudBillDownload(bill){try{window.lastSavedBillData=bill;if(typeof window.downloadPDFBill==='function')window.downloadPDFBill();else if(typeof downloadPDFBill==='function')downloadPDFBill()}catch(e){console.error(e);window.print()}}
   async function openCloudDocument(){
@@ -6645,7 +6712,22 @@ window.addEventListener('pagehide',function(){stopCamera();closeBarcodeUnitModal
   }
   window.tarajuCloudSaveDocument=saveDocument;window.tarajuOpenCloudDocument=openCloudDocument;window.tarajuCreateResumeCloudQr=addResumeQr;window.tarajuCreateBillCloudQr=addBillQr;window.tarajuCloseCloudDocument=closeViewer;
   addQrStyles();
-  function boot(){installResumeHook();installBillHook();setTimeout(installResumeHook,250);setTimeout(installBillHook,250);setTimeout(installResumeHook,800);setTimeout(installBillHook,800);setTimeout(function(){openCloudDocument().catch(function(e){console.error(e)})},700)}
+  function boot(){
+    installResumeHook();installBillHook();
+    setTimeout(installResumeHook,250);setTimeout(installBillHook,250);
+    setTimeout(installResumeHook,800);setTimeout(installBillHook,800);
+    var resumeLayer=document.getElementById('taraju-resume-preview-layer');
+    if(resumeLayer){
+      var ro=new MutationObserver(function(){if(resumeLayer.classList.contains('is-open')&&!resumeLayer.querySelector('.taraju-cloud-qr-card'))setTimeout(function(){addResumeQr().catch(function(e){console.warn(e)})},300)});
+      ro.observe(resumeLayer,{attributes:true,attributeFilter:['class'],childList:true,subtree:true});
+    }
+    var billModal=document.getElementById('billModal');
+    if(billModal){
+      var bo=new MutationObserver(function(){if((billModal.classList.contains('active')||billModal.style.display==='flex')&&!document.querySelector('#bill-modal-content > .taraju-cloud-qr-card'))setTimeout(function(){addBillQr().catch(function(e){console.warn(e)})},300)});
+      bo.observe(billModal,{attributes:true,attributeFilter:['class','style'],childList:true,subtree:true});
+    }
+    setTimeout(function(){openCloudDocument().catch(function(e){console.error(e)})},700);
+  }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
 </script>
