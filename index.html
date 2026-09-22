@@ -120,6 +120,29 @@
 .dark-mode .barcode-focus-status.active{color:#E0B52A}
 </style>
 
+<style id="taraju-barcode-modern-scanner-ui">
+/* Compact, product-barcode-oriented scanner UI */
+.barcode-scanner-topbar{position:fixed;left:14px;right:14px;top:calc(env(safe-area-inset-top,0px) + 12px);z-index:20008;display:flex;align-items:center;justify-content:space-between;pointer-events:none}
+.barcode-scanner-topbar .scanner-top-btn{pointer-events:auto;width:42px;height:42px;border:1px solid rgba(255,255,255,.2);border-radius:14px;background:rgba(0,0,0,.48);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);color:#fff;display:grid;place-items:center;box-shadow:0 4px 16px rgba(0,0,0,.28);cursor:pointer}
+.barcode-scanner-topbar .scanner-top-btn svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.barcode-scanner-title{padding:9px 15px;border-radius:999px;background:rgba(0,0,0,.48);color:#fff;font-size:.82rem;font-weight:800;letter-spacing:.15px;backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);text-shadow:0 1px 3px rgba(0,0,0,.7)}
+.barcode-scanner-frame-label{position:fixed;left:50%;transform:translateX(-50%);top:calc(24% - 30px);z-index:20007;color:#fff;font-size:.76rem;font-weight:700;text-align:center;text-shadow:0 1px 4px #000;pointer-events:none;opacity:.94}
+.barcode-scanner-controls{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);transform:translateX(-50%);z-index:20008;display:flex;align-items:center;gap:10px;padding:9px 11px;border:1px solid rgba(255,255,255,.16);border-radius:22px;background:rgba(0,0,0,.52);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.barcode-scanner-control{min-width:50px;height:44px;border:0;border-radius:15px;background:rgba(255,255,255,.1);color:#fff;display:flex;align-items:center;justify-content:center;gap:6px;font-size:.7rem;font-weight:800;cursor:pointer}
+.barcode-scanner-control svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.barcode-scanner-control.active{background:#E3B800;color:#111}
+.barcode-scanner-zoom{min-width:62px}
+.barcode-scanner-zoom-value{font-size:.72rem;font-weight:900}
+.barcode-camera-guide{left:17%!important;right:17%!important;top:37%!important;height:18%!important;border:0!important;border-radius:10px!important;box-shadow:0 0 0 9999px rgba(0,0,0,.36)!important;background:transparent!important}
+.barcode-camera-guide:before{content:"";position:absolute;inset:0;border:1px solid rgba(255,255,255,.82);border-radius:10px}
+.barcode-camera-guide:after{left:7%;right:7%;top:50%;height:2px;border-radius:2px}
+.barcode-camera-corner:before,.barcode-camera-corner:after{width:25px;height:25px}
+.barcode-camera-corner:before{left:17%;top:37%;border-width:3px 0 0 3px;border-top-left-radius:7px}
+.barcode-camera-corner:after{right:17%;bottom:45%;border-width:0 3px 3px 0;border-bottom-right-radius:7px}
+.barcode-scanner-helper{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 92px);z-index:20007;color:rgba(255,255,255,.88);font-size:.7rem;font-weight:700;text-align:center;text-shadow:0 1px 4px #000;pointer-events:none}
+@media(max-width:480px){.barcode-scanner-title{font-size:.76rem}.barcode-scanner-frame-label{top:calc(37% - 27px);font-size:.7rem}.barcode-scanner-controls{gap:7px;padding:8px 9px}.barcode-scanner-control{min-width:46px;height:42px}.barcode-scanner-zoom{min-width:58px}}
+</style>
+
 <style id="taraju-full-camera-mode-css">
 body.taraju-full-camera-open{overflow:hidden!important}
 body.taraju-full-camera-open #app-container{filter:none!important}
@@ -253,8 +276,8 @@ body.taraju-full-camera-open .barcode-camera-stop:active{transform:translateX(-5
 <div id="barcode-scan-panel" hidden>
 <div class="btn-row" style="margin-top:0"><button class="btn-primary" type="button" id="barcode-camera-start">Scan with Camera</button><label class="btn-secondary barcode-upload-label">Upload Barcode<input id="barcode-image-input" type="file" accept="image/*"></label></div>
 <div id="taraju-barcode-scan-status" class="barcode-inline-status" aria-live="polite"></div>
-<div id="taraju-barcode-camera-wrap" class="barcode-camera-wrap" hidden><video id="taraju-barcode-video" playsinline muted></video><div id="taraju-barcode-focus-status" class="barcode-focus-status">50MP Main Camera active. Point the barcode at the scanning frame.</div><div id="taraju-barcode-scan-live" class="barcode-scan-live" aria-live="polite"><span class="barcode-scan-live-dot"></span><span id="taraju-barcode-scan-live-text">Scanning with 50MP Main Camera…</span></div><div class="barcode-camera-guide" aria-hidden="true"></div><div class="barcode-camera-corner" aria-hidden="true"></div><button type="button" id="barcode-camera-stop" class="barcode-camera-stop">Stop Camera</button></div>
-<div class="barcode-note">Generated Taraju barcodes contain the item details you enter. Other barcodes are also scanned and their raw value is shown.</div>
+<div id="taraju-barcode-camera-wrap" class="barcode-camera-wrap" hidden><video id="taraju-barcode-video" playsinline muted></video><div class="barcode-scanner-topbar"><button type="button" id="barcode-scanner-back" class="scanner-top-btn" aria-label="Back from scanner" title="Back"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></svg></button><div class="barcode-scanner-title">Barcode & QR Scanner</div><button type="button" id="barcode-scanner-torch" class="scanner-top-btn" aria-label="Toggle flashlight" title="Flashlight"><svg viewBox="0 0 24 24"><path d="M9 3h6l1 4H8l1-4Z"/><path d="M8 7h8l-1 5v8H9v-8L8 7Z"/><path d="M12 12v5"/></svg></button></div><div id="taraju-barcode-focus-status" class="barcode-focus-status">50MP Main Camera active. Point the barcode at the scanning frame.</div><div id="taraju-barcode-scan-live" class="barcode-scan-live" aria-live="polite"><span class="barcode-scan-live-dot"></span><span id="taraju-barcode-scan-live-text">Scanning with 50MP Main Camera…</span></div><div class="barcode-scanner-frame-label">Place barcode or QR code inside the frame</div><div class="barcode-camera-guide" aria-hidden="true"></div><div class="barcode-camera-corner" aria-hidden="true"></div><div class="barcode-scanner-helper">Hold steady for 2 seconds</div><div class="barcode-scanner-controls"><button type="button" id="barcode-scanner-zoom-out" class="barcode-scanner-control barcode-scanner-zoom" aria-label="Zoom out"><span>−</span><span class="barcode-scanner-zoom-value" id="barcode-scanner-zoom-value">1.0×</span></button><button type="button" id="barcode-scanner-zoom-in" class="barcode-scanner-control barcode-scanner-zoom" aria-label="Zoom in"><span>+</span></button><button type="button" id="barcode-camera-stop" class="barcode-scanner-control" aria-label="Stop scanner"><svg viewBox="0 0 24 24"><path d="M7 7h10v10H7z"/></svg><span>Stop</span></button></div></div>
+<div class="barcode-note">Generated Taraju barcodes contain the item details you enter. This scanner also reads QR codes, links, payment data, Wi‑Fi, contacts, text and other encoded content.</div>
 <div id="taraju-barcode-result" class="barcode-scan-result" hidden><div id="taraju-barcode-result-content"></div><div id="taraju-barcode-lookup" class="barcode-detail-section" hidden></div></div>
 </div>
 </div>
@@ -5522,6 +5545,7 @@ function handleCameraBarcodeDetection(raw,fmt){
   setBarcodeFocusSearching(true);
   setStatus('taraju-barcode-scan-status','Barcode scan complete. Opening details…','success');
   setBarcodeScanLive('Barcode scanned • Opening details…',true);
+  try{if(navigator.vibrate)navigator.vibrate([70,45,70])}catch(e){}
   showResult(raw,fmt);
   scheduleFocusedBarcodeStop();
   return true;
@@ -5702,16 +5726,26 @@ function barcodeParseGS1(raw){
   return rows.length?rows:null;
 }
 function barcodeDecodeSpecialData(raw){
-  var s=String(raw||'').trim();
-  var info=[];
-  if(/^https?:\/\//i.test(s))info.push({label:'URL',value:s});
-  else if(/^upi:\/\//i.test(s))info.push({label:'UPI',value:s});
-  else if(/^mailto:/i.test(s))info.push({label:'Email',value:s.replace(/^mailto:/i,'')});
-  else if(/^tel:/i.test(s))info.push({label:'Phone',value:s.replace(/^tel:/i,'')});
-  else if(/^WIFI:/i.test(s))info.push({label:'Wi‑Fi',value:s});
-  else if(/^BEGIN:VCARD/i.test(s))info.push({label:'vCard',value:s});
-  else if(/^geo:/i.test(s))info.push({label:'Location',value:s});
-  else if(/^\{[\s\S]*\}$/.test(s)){try{var o=JSON.parse(s);info.push({label:'JSON Data',value:JSON.stringify(o,null,2)})}catch(e){}}
+  var s=String(raw||'').trim(),info=[];
+  function add(label,value){if(value!==undefined&&value!==null&&String(value)!=='')info.push({label:label,value:String(value)})}
+  function qp(uri){var out={};try{var q=String(uri||'').split('?')[1]||'';q.split('&').forEach(function(part){if(!part)return;var a=part.split('=');var k=decodeURIComponent(a.shift()||'').toLowerCase();var v=decodeURIComponent(a.join('=').replace(/\\+/g,' '));if(k)out[k]=v})}catch(e){}return out}
+  if(/^https?:\/\//i.test(s)){
+    add('Type','Web Link');add('URL',s);try{var u=new URL(s);add('Domain',u.hostname);if(u.pathname&&u.pathname!=='/')add('Path',u.pathname)}catch(e){}
+  }else if(/^(?:upi|bhim):\/\//i.test(s)){
+    var q=qp(s);add('Type','UPI Payment QR');add('UPI ID',q.pa||q.vpa||'');add('Payee Name',q.pn||q.name||'');add('Amount',q.am?(q.am+' '+(q.cu||'INR')):'');add('Currency',q.cu||'INR');add('Note',q.tn||q.note||'');add('Reference',q.tr||q.txn||'');add('Merchant Code',q.mc||'');add('Raw Payment Data',s);
+  }else if(/^mailto:/i.test(s)){add('Type','Email');add('Email',s.replace(/^mailto:/i,'').split('?')[0]);add('Raw Email Data',s);
+  }else if(/^tel:/i.test(s)){add('Type','Phone Number');add('Phone',s.replace(/^tel:/i,''));
+  }else if(/^(?:sms|smsto):/i.test(s)){add('Type','SMS');add('SMS Data',s);
+  }else if(/^WIFI:/i.test(s)){
+    add('Type','Wi‑Fi QR');var m={};s.replace(/^WIFI:/i,'').split(';').forEach(function(part){var ix=part.indexOf(':');if(ix>0)m[part.slice(0,ix)]=part.slice(ix+1)});add('Network (SSID)',m.S||'');add('Security',m.T||'');add('Password',m.P||'');add('Hidden Network',m.H||'');add('Raw Wi‑Fi Data',s);
+  }else if(/^BEGIN:VCARD/i.test(s)){
+    add('Type','Contact / vCard');s.split(/\r?\n/).forEach(function(line){var ix=line.indexOf(':');if(ix<1)return;var key=line.slice(0,ix).toUpperCase(),val=line.slice(ix+1).trim();if(/^FN(?:;|$)/.test(key))add('Name',val);else if(/^N(?:;|$)/.test(key))add('Full Name',val);else if(/^ORG(?:;|$)/.test(key))add('Organization',val);else if(/^TEL(?:;|$)/.test(key))add('Phone',val);else if(/^EMAIL(?:;|$)/.test(key))add('Email',val);else if(/^URL(?:;|$)/.test(key))add('Website',val)});add('Raw Contact Data',s);
+  }else if(/^geo:/i.test(s)){add('Type','Location');add('Location',s);
+  }else if(/^BEGIN:VEVENT/i.test(s)){add('Type','Calendar Event');add('Event Data',s);
+  }else if(/^(?:bitcoin|ethereum|solana):/i.test(s)){add('Type','Digital Payment / Wallet');add('Payment URI',s);
+  }else if(/^DATA:/i.test(s)){add('Type','Data URI');add('Data',s);
+  }else if(/^\{[\s\S]*\}$/.test(s)){try{var o=JSON.parse(s);add('Type','JSON Data');add('JSON',JSON.stringify(o,null,2))}catch(e){add('Type','Text / Data');add('Content',s)}}
+  else{add('Type','Plain Text / Data');add('Content',s)}
   return info;
 }
 function barcodeRenderAiRows(rows){
@@ -5846,67 +5880,42 @@ function renderBarcodeLookupBlock(code){
 }
 function showResult(raw,format){
   var wasCameraOpen=document.body.classList.contains('taraju-full-camera-open');
-  /* A successful camera scan immediately returns to the app's barcode details page. */
-  if(wasCameraOpen){
-    stopCamera();
-  }
-  lastBarcodeValue=String(raw||'').trim();
-  if(lastBarcodeValue){playBarcodeScanSound(lastBarcodeValue);setBarcodeScanLive('Barcode detected • Opening details…',true);}
+  if(wasCameraOpen)stopCamera();
+  lastBarcodeValue=String(raw||'').trim();try{window.lastBarcodeValueForQr=lastBarcodeValue}catch(e){}
+  if(lastBarcodeValue){playBarcodeScanSound(lastBarcodeValue);setBarcodeScanLive('Scan complete • Opening details…',true)}
   var result=q('taraju-barcode-result'),content=q('taraju-barcode-result-content'),lookup=q('taraju-barcode-lookup');
   if(!result||!content)return;
   if(lookup){lookup.hidden=true;lookup.innerHTML='';}
-
-  var parsed=parsePayload(lastBarcodeValue);
-  var gs1=barcodeParseGS1(lastBarcodeValue);
-  var special=barcodeDecodeSpecialData(lastBarcodeValue);
-
+  var parsed=parsePayload(lastBarcodeValue),gs1=barcodeParseGS1(lastBarcodeValue),special=barcodeDecodeSpecialData(lastBarcodeValue);
+  var fmt=String(format||'').toLowerCase();
+  var typeHint=special.filter(function(x){return String(x.label||'').toLowerCase()==='type'}).map(function(x){return String(x.value||'').toLowerCase()}).join(' ');
+  var isQr=/qr|qrcode/.test(fmt)||/payment qr|wifi qr|qr code/.test(typeHint);
+  var header='<div class="barcode-detail-heading"><div class="barcode-detail-kicker">'+(isQr?'QR CODE DETAILS':'BARCODE DETAILS')+'</div><div class="barcode-detail-title">Scan Result</div></div>';
   if(parsed&&parsed.custom){
     var d=parsed.data;
-    content.innerHTML='<div class="barcode-result-grid">'+
-      barcodeDetailRow('Item',d.name)+
-      barcodeDetailRow('Price',d.price||'—')+
-      barcodeDetailRow('Quantity',(d.qty||'—')+' '+(d.unit||''))+
-      '</div>';
+    content.innerHTML=header+'<div class="barcode-result-grid">'+barcodeDetailRow('Item',d.name)+barcodeDetailRow('Price',d.price||'—')+barcodeDetailRow('Quantity',(d.qty||'—')+' '+(d.unit||''))+'</div>';
   }else{
-    var code=barcodeNormalizeLookupCode(lastBarcodeValue);
-    var type=barcodeFormatLabel(format,lastBarcodeValue);
-    var parts=barcodeSplitEncodedData(lastBarcodeValue);
-    var out='<div class="barcode-result-grid">'+
-      barcodeDetailRow('Type',type)+
-      barcodeDetailRow('Barcode Value',lastBarcodeValue)+
-      '</div>';
-
-    if(gs1)out+=barcodeRenderAiRows(gs1);
-    if(!gs1&&parts.length>1)out+=barcodeRenderRawParts(parts);
-
-    if(special.length){
-      out+='<div class="barcode-power-section"><div class="barcode-power-title">Detected Data</div><div class="barcode-power-grid">'+
-        special.map(function(x){return barcodeDetailRow(x.label,x.value)}).join('')+
-        '</div></div>';
-    }
+    var code=barcodeNormalizeLookupCode(lastBarcodeValue),type=barcodeFormatLabel(format,lastBarcodeValue),parts=barcodeSplitEncodedData(lastBarcodeValue);
+    var out=header+'<div class="barcode-result-grid">'+barcodeDetailRow('Type',type)+barcodeDetailRow(isQr?'QR Content':'Barcode Value',lastBarcodeValue)+'</div>';
+    if(gs1&&!isQr)out+=barcodeRenderAiRows(gs1);
+    if(!gs1&&parts.length>1&&!isQr)out+=barcodeRenderRawParts(parts);
+    if(special.length)out+='<div class="barcode-power-section"><div class="barcode-power-title">Detected Details</div><div class="barcode-power-grid">'+special.map(function(x){return barcodeDetailRow(x.label,x.value)}).join('')+'</div></div>';
     if(/^https?:\/\//i.test(lastBarcodeValue)){
-      out+='<a class="barcode-qr-link" href="'+barcodeEscape(lastBarcodeValue)+'" target="_blank" rel="noopener noreferrer">Open scanned link</a>';
+      out+='<div class="qr-action-row"><a class="qr-action qr-primary" href="'+barcodeEscape(lastBarcodeValue)+'" target="_blank" rel="noopener noreferrer">Open Link</a><button type="button" class="qr-action qr-secondary" onclick="tarajuCopyQrValue()">Copy Content</button></div>';
+    }else if(/^(?:upi|bhim):\/\//i.test(lastBarcodeValue)){
+      out+='<div class="qr-action-row"><a class="qr-action qr-primary" href="'+barcodeEscape(lastBarcodeValue)+'">Open UPI App</a><button type="button" class="qr-action qr-secondary" onclick="tarajuCopyQrValue()">Copy Payment Data</button></div>';
+    }else if(/^(?:mailto:|tel:|sms:|smsto:)/i.test(lastBarcodeValue)){
+      out+='<div class="qr-action-row"><a class="qr-action qr-primary" href="'+barcodeEscape(lastBarcodeValue)+'">Open</a><button type="button" class="qr-action qr-secondary" onclick="tarajuCopyQrValue()">Copy Content</button></div>';
+    }else if(isQr){
+      out+='<div class="qr-action-row"><button type="button" class="qr-action qr-secondary" onclick="tarajuCopyQrValue()">Copy QR Content</button></div>';
     }
     content.innerHTML=out;
-
-    if(code){
-      renderBarcodeLookupBlock(code);
-    }else if(lookup){
-      lookup.hidden=false;
-      lookup.innerHTML='<div class="barcode-power-title">Offline Decoding</div>'+
-        '<div class="barcode-power-grid">'+
-        barcodeDetailRow('Status',gs1?'GS1 application data decoded on-device':'All raw data shown directly from the barcode')+
-        '</div>';
-    }
+    if(code&&!isQr)renderBarcodeLookupBlock(code);
+    else if(lookup&&!isQr){lookup.hidden=false;lookup.innerHTML='<div class="barcode-power-title">Offline Decoding</div><div class="barcode-power-grid">'+barcodeDetailRow('Status',gs1?'GS1 application data decoded on-device':'All raw data shown directly from the barcode')+'</div>'}
   }
-
   result.hidden=false;
-  setStatus('taraju-barcode-scan-status','Barcode scanned successfully.','success');
-  if(wasCameraOpen){
-    setTimeout(function(){
-      try{result.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){}
-    },60);
-  }
+  setStatus('taraju-barcode-scan-status',isQr?'QR code scanned successfully.':'Barcode scanned successfully.','success');
+  if(wasCameraOpen)setTimeout(function(){try{result.scrollIntoView({behavior:'smooth',block:'start'})}catch(e){}},60);
 }
 
 function openFullBarcodeCamera(){
@@ -5915,7 +5924,7 @@ function openFullBarcodeCamera(){
 function closeFullBarcodeCamera(){
   document.body.classList.remove('taraju-full-camera-open');
 }
-function stopCamera(){closeFullBarcodeCamera();resetBarcodeScanCandidate();tarajuFocusSearchLock=false;setBarcodeFocusSearching(false);setBarcodeScanLive('Scanner stopped.',false);if(nativeTimer){clearInterval(nativeTimer);nativeTimer=null}nativeBusy=false;if(scanControls){try{scanControls.stop()}catch(e){}scanControls=null}if(scanner){try{scanner.reset()}catch(e){}scanner=null}if(scanStream){scanStream.getTracks().forEach(function(track){try{track.stop()}catch(e){}});scanStream=null}var v=q('taraju-barcode-video');if(v){try{v.pause()}catch(e){}v.srcObject=null}var wrap=q('taraju-barcode-camera-wrap');if(wrap)wrap.hidden=true}
+function stopCamera(){try{if(scanStream){var st=scanStream.getVideoTracks()[0];if(st&&st.applyConstraints&&tarajuScannerTorchOn)st.applyConstraints({advanced:[{torch:false}]}).catch(function(){})}}catch(e){}tarajuScannerTorchOn=false;var torchBtn=q('barcode-scanner-torch');if(torchBtn)torchBtn.classList.remove('active');closeFullBarcodeCamera();resetBarcodeScanCandidate();tarajuFocusSearchLock=false;setBarcodeFocusSearching(false);setBarcodeScanLive('Scanner stopped.',false);if(nativeTimer){clearInterval(nativeTimer);nativeTimer=null}nativeBusy=false;if(scanControls){try{scanControls.stop()}catch(e){}scanControls=null}if(scanner){try{scanner.reset()}catch(e){}scanner=null}if(scanStream){scanStream.getTracks().forEach(function(track){try{track.stop()}catch(e){}});scanStream=null}var v=q('taraju-barcode-video');if(v){try{v.pause()}catch(e){}v.srcObject=null}var wrap=q('taraju-barcode-camera-wrap');if(wrap)wrap.hidden=true}
 var tarajuLastFocusedBarcode='';
 var tarajuFocusSearchLock=false;
 
@@ -6073,6 +6082,12 @@ async function startNative(){
     }
     await enableContinuousBarcodeFocus(scanStream);
     try{
+      var zoomTrack=scanStream.getVideoTracks()[0];
+      var zoomCaps=zoomTrack&&zoomTrack.getCapabilities?zoomTrack.getCapabilities():{};
+      if(zoomCaps.zoom)tarajuScannerZoom=Number(zoomCaps.zoom.min||1);
+      updateBarcodeScannerZoomLabel();
+    }catch(e){}
+    try{
       var mainTrack=scanStream.getVideoTracks()[0];
       if(mainTrack&&mainTrack.getCapabilities){
         var mainCaps=mainTrack.getCapabilities();
@@ -6104,7 +6119,40 @@ async function startNative(){
 
 async function ensureZxing(){await loadScript(ZXING_SRC,function(){return !!(window.ZXingBrowser&&window.ZXingBrowser.BrowserMultiFormatReader)});return window.ZXingBrowser}
 async function startZxing(){var v=q('taraju-barcode-video'),wrap=q('taraju-barcode-camera-wrap');try{unlockBarcodeScanSound();resetBarcodeScanCandidate();var z=await ensureZxing();scanner=new z.BrowserMultiFormatReader();wrap.hidden=false;openFullBarcodeCamera();setBarcodeFocusSearching(false);setStatus('taraju-barcode-scan-status','Starting barcode scanner…','');try{var warm=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}});warm.getTracks().forEach(function(t){try{t.stop()}catch(e){}})}catch(e){}var devices=await z.BrowserCodeReader.listVideoInputDevices();var rear=devices.filter(function(d){return !/front|user|selfie/i.test(String(d.label||''))});rear=rear.filter(function(d){return /back|rear|environment|camera|main|primary/i.test(String(d.label||''))}).length?rear.filter(function(d){return /back|rear|environment|camera|main|primary/i.test(String(d.label||''))}):rear;rear.sort(function(a,b){function score(d){var l=String(d.label||'').toLowerCase(),s=0;if(/50\s*mp|imx890|main|primary/i.test(l))s+=120;if(/back|rear|environment/i.test(l))s+=70;if(/wide|ultra[- ]?wide|macro/i.test(l))s-=100;return s}return score(b)-score(a)});var chosen=rear.length?rear[0].deviceId:(devices.length?devices[devices.length-1].deviceId:undefined);scanControls=await scanner.decodeFromVideoDevice(chosen,v,async function(result){if(result){var raw=result.getText?result.getText():result.text;var fmt='';try{fmt=result.getBarcodeFormat?String(result.getBarcodeFormat()):''}catch(e){}if(raw)handleCameraBarcodeDetection(raw,fmt)} });setTimeout(function(){try{enableContinuousBarcodeFocus(v.srcObject)}catch(e){}},250);setStatus('taraju-barcode-scan-status','50MP main rear camera prioritized. Point the main camera at the barcode.','');setBarcodeScanLive('Scanning with 50MP Main Camera… Hold steady 2 seconds',false);return true}catch(e){console.error(e);stopCamera();setStatus('taraju-barcode-scan-status','Camera scanner could not start. Use Upload Barcode instead.','error');return false}}
-async function startCamera(){stopCamera();resetBarcodeScanCandidate();unlockBarcodeScanSound();lastBarcodeSoundValue='';setBarcodeScanLive('Starting 50MP Main Camera…',false);if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){setStatus('taraju-barcode-scan-status','Camera is unavailable in this browser. Use Upload Barcode instead.','error');return}if(await startNative())return;await startZxing()}
+var tarajuScannerTorchOn=false;
+var tarajuScannerZoom=1;
+function updateBarcodeScannerZoomLabel(){var el=q('barcode-scanner-zoom-value');if(el)el.textContent=(Math.round(tarajuScannerZoom*10)/10).toFixed(1)+'×'}
+async function setBarcodeScannerZoom(delta){
+  if(!scanStream)return;
+  try{
+    var track=scanStream.getVideoTracks()[0];
+    if(!track||!track.getCapabilities)return;
+    var caps=track.getCapabilities(),z=caps.zoom;
+    if(!z)return;
+    var min=Number(z.min||1),max=Number(z.max||1),step=Number(z.step||0.1);
+    var next=Math.min(max,Math.max(min,tarajuScannerZoom+delta));
+    next=Math.round(next/step)*step;
+    await track.applyConstraints({advanced:[{zoom:next}]});
+    tarajuScannerZoom=next;
+    updateBarcodeScannerZoomLabel();
+  }catch(e){}
+}
+async function toggleBarcodeScannerTorch(){
+  if(!scanStream)return;
+  try{
+    var track=scanStream.getVideoTracks()[0];
+    if(!track||!track.getCapabilities)return;
+    var caps=track.getCapabilities();
+    if(!('torch' in caps)){setBarcodeScanLive('Flashlight is not supported by this camera.',false);return}
+    tarajuScannerTorchOn=!tarajuScannerTorchOn;
+    await track.applyConstraints({advanced:[{torch:tarajuScannerTorchOn}]});
+    var btn=q('barcode-scanner-torch');if(btn)btn.classList.toggle('active',tarajuScannerTorchOn);
+    setBarcodeScanLive(tarajuScannerTorchOn?'Scanning • Flashlight ON':'Scanning with 50MP Main Camera… Hold steady 2 seconds',false);
+  }catch(e){tarajuScannerTorchOn=false}
+}
+function scannerBack(){stopCamera();try{if(typeof goBack==='function')goBack();}catch(e){}}
+
+async function startCamera(){stopCamera();resetBarcodeScanCandidate();unlockBarcodeScanSound();lastBarcodeSoundValue='';tarajuScannerTorchOn=false;tarajuScannerZoom=1;updateBarcodeScannerZoomLabel();var torch=q('barcode-scanner-torch');if(torch)torch.classList.remove('active');setBarcodeScanLive('Starting 50MP Main Camera…',false);if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){setStatus('taraju-barcode-scan-status','Camera is unavailable in this browser. Use Upload Barcode instead.','error');return}if(await startNative())return;await startZxing()}
 async function tarajuDecodeImageWithPasses(file){
   var z=await ensureZxing();
   var reader=new z.BrowserMultiFormatReader();
@@ -6191,7 +6239,7 @@ function openBarcodeUnitModal(){var modal=q('barcodeUnitModal'),trigger=q('barco
 function closeBarcodeUnitModal(){var modal=q('barcodeUnitModal'),trigger=q('barcode-item-unit-trigger');if(!modal)return;modal.classList.remove('active');modal.setAttribute('aria-hidden','true');if(trigger)trigger.setAttribute('aria-expanded','false');document.body.style.removeProperty('overflow');if(trigger)try{trigger.focus()}catch(e){}}
 function selectBarcodeUnit(unit){var select=q('barcode-item-unit');if(!select)return;var wanted=String(unit||'PCS');var option=Array.from(select.options||[]).find(function(o){return o.value===wanted});if(!option)return;select.value=wanted;syncBarcodeUnitModal();select.dispatchEvent(new Event('change',{bubbles:true}));closeBarcodeUnitModal()}
 function setMode(mode){resetBarcodeScanCandidate();if(mode!=='scan'){tarajuLastFocusedBarcode='';}else{tarajuLastFocusedBarcode='';}var gen=q('barcode-generate-panel'),scan=q('barcode-scan-panel'),gb=q('barcode-mode-generate'),sb=q('barcode-mode-scan');var isScan=mode==='scan';if(gen)gen.hidden=isScan;if(scan)scan.hidden=!isScan;if(gb){gb.classList.toggle('active',!isScan);gb.setAttribute('aria-selected',String(!isScan))}if(sb){sb.classList.toggle('active',isScan);sb.setAttribute('aria-selected',String(isScan))}if(!isScan)stopCamera()}
-function init(){q('barcode-mode-generate')?.addEventListener('click',function(){setMode('generate')});q('barcode-mode-scan')?.addEventListener('click',function(){setMode('scan')});q('barcode-generate-form')?.addEventListener('submit',function(e){e.preventDefault();generate()});q('barcode-generate-clear')?.addEventListener('click',clearGenerate);q('barcode-download-svg')?.addEventListener('click',downloadSvg);q('barcode-download-png')?.addEventListener('click',downloadPng);q('barcode-camera-start')?.addEventListener('click',startCamera);q('barcode-camera-stop')?.addEventListener('click',stopCamera);q('barcode-image-input')?.addEventListener('change',function(){var file=this.files&&this.files[0];if(file)scanUploaded(file);this.value=''});q('barcode-item-unit-trigger')?.addEventListener('click',openBarcodeUnitModal);q('barcodeUnitModalClose')?.addEventListener('click',closeBarcodeUnitModal);q('barcodeUnitModal')?.addEventListener('click',function(e){if(e.target===this)closeBarcodeUnitModal()});document.querySelectorAll('#barcodeUnitOptions .barcode-unit-option').forEach(function(btn){btn.addEventListener('click',function(){selectBarcodeUnit(this.getAttribute('data-unit'))})});q('barcode-item-unit')?.addEventListener('change',syncBarcodeUnitModal);syncBarcodeUnitModal();}
+function init(){q('barcode-mode-generate')?.addEventListener('click',function(){setMode('generate')});q('barcode-mode-scan')?.addEventListener('click',function(){setMode('scan')});q('barcode-generate-form')?.addEventListener('submit',function(e){e.preventDefault();generate()});q('barcode-generate-clear')?.addEventListener('click',clearGenerate);q('barcode-download-svg')?.addEventListener('click',downloadSvg);q('barcode-download-png')?.addEventListener('click',downloadPng);q('barcode-camera-start')?.addEventListener('click',startCamera);q('barcode-camera-stop')?.addEventListener('click',stopCamera);q('barcode-scanner-back')?.addEventListener('click',scannerBack);q('barcode-scanner-torch')?.addEventListener('click',toggleBarcodeScannerTorch);q('barcode-scanner-zoom-out')?.addEventListener('click',function(){setBarcodeScannerZoom(-0.2)});q('barcode-scanner-zoom-in')?.addEventListener('click',function(){setBarcodeScannerZoom(0.2)});q('barcode-image-input')?.addEventListener('change',function(){var file=this.files&&this.files[0];if(file)scanUploaded(file);this.value=''});q('barcode-item-unit-trigger')?.addEventListener('click',openBarcodeUnitModal);q('barcodeUnitModalClose')?.addEventListener('click',closeBarcodeUnitModal);q('barcodeUnitModal')?.addEventListener('click',function(e){if(e.target===this)closeBarcodeUnitModal()});document.querySelectorAll('#barcodeUnitOptions .barcode-unit-option').forEach(function(btn){btn.addEventListener('click',function(){selectBarcodeUnit(this.getAttribute('data-unit'))})});q('barcode-item-unit')?.addEventListener('change',syncBarcodeUnitModal);syncBarcodeUnitModal();}
 window.tarajuBarcodeStop=stopCamera;
 window.tarajuBarcodeSetMode=setMode;
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
@@ -6327,6 +6375,28 @@ window.addEventListener('pagehide',function(){stopCamera();closeBarcodeUnitModal
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(initHistory,0)},{once:true});
   else setTimeout(initHistory,0);
+})();
+</script>
+<style id="taraju-qr-scanner-enhancement-css">
+.barcode-detail-heading{margin:0 0 12px;padding:12px 14px;border-radius:14px;background:var(--bg-light);border:1px solid rgba(127,127,127,.14)}
+.barcode-detail-kicker{font-size:.65rem;font-weight:900;letter-spacing:.12em;color:var(--text-secondary)}
+.barcode-detail-title{margin-top:3px;font-size:1.08rem;font-weight:850;color:var(--text-primary)}
+.qr-action-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.qr-action{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 14px;border-radius:11px;text-decoration:none;font-weight:800;font-size:.84rem;border:1px solid transparent;cursor:pointer}
+.qr-primary{background:var(--royal-blue);color:#fff}
+.qr-secondary{background:var(--bg-light);color:var(--text-primary);border-color:rgba(127,127,127,.18)}
+.dark-mode .barcode-detail-heading{background:#0F1725;border-color:#26374A}
+.dark-mode .qr-secondary{background:#111B29;color:#fff;border-color:#2A394D}
+</style>
+<script id="taraju-qr-scanner-enhancement-js">
+(function(){
+  'use strict';
+  window.tarajuCopyQrValue=function(){
+    var value=window.lastBarcodeValueForQr||'';if(!value)return;
+    function done(){try{var n=document.getElementById('taraju-barcode-scan-status');if(n){n.textContent='QR/Barcode content copied.';n.className='barcode-inline-status success'}}catch(e){}}
+    function fallback(){try{var t=document.createElement('textarea');t.value=value;t.style.position='fixed';t.style.opacity='0';document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();done()}catch(e){}}
+    try{if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(value).then(done).catch(fallback);else fallback()}catch(e){fallback()}
+  };
 })();
 </script>
 </body></html>
