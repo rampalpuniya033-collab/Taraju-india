@@ -1,4 +1,4 @@
-# Taraju India
+# Terviqo India
 
 > A modern, mobile-first digital productivity platform designed to bring useful everyday tools together in one simple experience.
 
